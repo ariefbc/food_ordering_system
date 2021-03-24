@@ -1,0 +1,516 @@
+<style type="text/css">
+.tg  {border-collapse:collapse;border-spacing:0;}
+.tg td{font-family:Arial, sans-serif;font-size:14px;border-style:solid;border-width:1px;overflow:hidden;word-break:normal;border-color:black;}
+.tg th{font-family:Arial, sans-serif;font-size:14px;font-weight:normal;border-style:solid;border-width:1px;overflow:hidden;word-break:normal;border-color:black;}
+.tg .tg-hyn2{font-weight:bold;font-size:10px;border-color:inherit;text-align:center}
+.tg .tg-6vvv{font-style:italic;font-size:10px;border-color:inherit;vertical-align:top}
+.tg .tg-w01g{font-weight:bold;font-size:10px;background-color:#c0c0c0;border-color:inherit}
+.tg .tg-l711{border-color:inherit}
+.tg .tg-us36{border-color:inherit;vertical-align:top}
+.tg .tg-4a1m{font-size:10px;border-color:inherit;vertical-align:top}
+.tg .tg-xocx{font-size:10px;border-color:inherit;text-align:center}
+.tg .tg-1843{font-size:10px;border-color:inherit}
+.tg .tg-u5xp{font-weight:bold;font-size:10px;background-color:#c0c0c0;border-color:inherit;vertical-align:top}
+.tg .tg-xxzo{background-color:#c0c0c0;border-color:inherit;vertical-align:top}
+.tg .tg-yw4l{vertical-align:top}
+</style>
+<table class="tg">
+  <tr>
+	<td colspan="7" class="tg-hyn2">
+		<table class="tg" style="width:100%">
+			<tr>
+				<th class="tg-xocx" colspan="2" rowspan="2" style="width:10%">@@logo</th>
+				<th class="tg-hyn2" colspan="3">Sponsorship Request Form (SRF)</th>
+				<th class="tg-hyn2" colspan="2"  style="width:15%">Annex 16</th>
+			</tr>
+			<tr>
+				<td class="tg-hyn2" colspan="3">-@@entity_name-</td>
+				<td class="tg-hyn2" colspan="2">@@sop_number</td>
+			</tr>
+		</table>
+	</td>
+  </tr>
+  <tr>
+    <td class="tg-w01g" colspan="7">PEMOHON</td>
+  </tr>
+  <tr>
+    <td class="tg-1843">Nama Pemohon<br></td>
+    <td class="tg-1843">:</td>
+    <td class="tg-1843">@@nama_requestor</td>
+    <td class="tg-l711"></td>
+    <td class="tg-1843">SRF No<br></td>
+    <td class="tg-1843">:</td>
+    <td class="tg-4a1m">@@srf_no</td>
+  </tr>
+  <tr>
+    <td class="tg-1843">Nama Atasan<br></td>
+    <td class="tg-1843">:</td>
+    <td class="tg-1843">@@nama_dm</td>
+    <td class="tg-l711"></td>
+    <td class="tg-1843">Tanggal</td>
+    <td class="tg-1843">:</td>
+    <td class="tg-4a1m">@@date_create Bulan @@month_create Tahun: @@year_create<br></td>
+  </tr>
+  <tr>
+    <td class="tg-4a1m">Area Atasan<br></td>
+    <td class="tg-4a1m">:</td>
+    <td class="tg-4a1m">@@dm_area</td>
+    <td class="tg-us36"></td>
+    <td class="tg-4a1m">Budget</td>
+    <td class="tg-4a1m">:</td>
+    <td class="tg-4a1m">@@box_marketing Marketing @@box_sales Sales<br></td>
+  </tr>
+  <tr>
+    <td class="tg-4a1m">Kontak</td>
+    <td class="tg-4a1m">:</td>
+    <td class="tg-4a1m">@@requestor_kontak (No Hp)</td>
+    <td class="tg-6vvv"><br></td>
+    <td class="tg-us36"></td>
+    <td class="tg-us36"></td>
+    <td class="tg-us36"></td>
+  </tr>
+  <tr>
+    <td class="tg-u5xp" colspan="7">DETAIL KEGIATAN<br></td>
+  </tr>
+  <tr>
+  <td class="tg-4a1m" colspan="7">@@box_hcp_sponsorship HCP Sponsorship @@box_nonhcp_sponsorship Non HCP Sponsorship</td>
+  </tr>
+  <tr>
+  <td class="tg-4a1m">Nama Acara</td><td class="tg-4a1m">:</td>
+  <td class="tg-4a1m" colspan="2">@@event_name</td>
+  <td class="tg-4a1m">Tanggal Acara Dari</td><td class="tg-4a1m">:</td>
+  <td class="tg-4a1m">@@event_date_from s/d : @@event_date_until</td>
+  </tr>
+  <tr>
+  <td class="tg-4a1m">Lokasi</td><td class="tg-4a1m">:</td>
+  <td class="tg-4a1m" colspan="2">@@event_location</td>
+  <td class="tg-4a1m">&nbsp;</td><td class="tg-4a1m">:</td>
+  <td class="tg-4a1m">@@box_supporting_docs Lampiran Agenda/Announcement/Proposal/CV</td>
+  </tr>
+  <tr>
+    <td class="tg-u5xp" colspan="7">DETAIL HEALTHCARE PROFESSIONAL (HCP) / HEALTCH CARE ORGANIZATION (HCO)<br></td>
+  </tr>
+  <tr>
+    <td class="tg-4a1m" colspan="3">@@box_asn Pegawai Negeri (ASN) @@box_swasta Pegawai Swasta @@box_perorangan Praktek Perorangan<br></td>
+    <td class="tg-4a1m">&nbsp;</td>
+    <td class="tg-4a1m" colspan="3">@@box_hco HCO<br></td>
+  </tr>
+  <tr>
+    <td class="tg-4a1m">Nama HCP<br></td>
+    <td class="tg-4a1m">:</td>
+    <td class="tg-4a1m">@@nama_hcp</td>
+    <td class="tg-us36"></td>
+    <td class="tg-4a1m">Nama HCO<br></td>
+    <td class="tg-4a1m">:</td>
+    <td class="tg-4a1m">@@nama_hco<br></td>
+  </tr>
+  <tr>
+    <td class="tg-4a1m">Spesialisasi</td>
+    <td class="tg-4a1m">:</td>
+    <td class="tg-4a1m">@@hcp_spesialisasi</td>
+    <td class="tg-us36"></td>
+    <td class="tg-4a1m">Nama Contact Person</td>
+    <td class="tg-4a1m">:</td>
+    <td class="tg-4a1m">@@hco_contact_person</td>
+  </tr>
+  <tr>
+    <td class="tg-4a1m">Kontak</td>
+    <td class="tg-4a1m">:</td>
+    <td class="tg-6vvv">@@hcp_kontak (HP HCP)<br></td>
+    <td class="tg-us36"></td>
+    <td class="tg-4a1m">Alamat HCO<br></td>
+    <td class="tg-4a1m">:</td>
+    <td class="tg-4a1m">@@alamat_hco</td>
+  </tr>
+  <tr>
+    <td class="tg-4a1m">NIK HCP</td>
+    <td class="tg-4a1m">:</td>
+    <td class="tg-6vvv">@@hcp_nik<br></td>
+    <td class="tg-us36" rowspan="6"></td>
+    <td class="tg-4a1m" rowspan="6">Kota<br></td>
+    <td class="tg-4a1m" rowspan="6">:</td>
+    <td class="tg-4a1m" rowspan="6">@@hco_kota</td>
+  </tr>
+  <tr>
+    <td class="tg-4a1m">Nama Institusi</td>
+    <td class="tg-4a1m">:</td>
+    <td class="tg-6vvv">@@nama_institusi_praktek_hcp<br></td>
+  </tr>
+  <tr>
+    <td class="tg-4a1m">Dept/Unit/Bidang</td>
+    <td class="tg-4a1m">:</td>
+    <td class="tg-6vvv">@@dept_unit_bidang<br></td>
+  </tr>
+  <tr>
+    <td class="tg-4a1m">Nama Dir/Kepala Dept </td>
+    <td class="tg-4a1m">:</td>
+    <td class="tg-6vvv">@@nama_kepala_dir_dept<br></td>
+  </tr>
+  <tr>
+    <td class="tg-4a1m">Nama Institusi Praktek</td>
+    <td class="tg-4a1m">:</td>
+    <td class="tg-6vvv">@@nama_institusi_praktek<br></td>
+  </tr>
+  <tr>
+    <td class="tg-4a1m">Alamat Praktek</td>
+    <td class="tg-4a1m">:</td>
+    <td class="tg-6vvv">@@alamat_praktek<br></td>
+  </tr>
+  <tr>
+    <td class="tg-4a1m">Kota<br></td>
+    <td class="tg-4a1m">:</td>
+    <td class="tg-4a1m">@@kota_praktek_hcp</td>
+    <td class="tg-4a1m">&nbsp;</td>
+    <td class="tg-4a1m" colspan="3">@@box_regular_hcp Regular HCP @@box_regional_national_kol Regional /National KOL @@box_cross_border_kol Cross Border KOL</td>
+  </tr>
+  <tr>
+    <td class="tg-u5xp" colspan="7">DETAIL TIPE KERJASAMA</td>
+  </tr>
+  <tr>
+    <td class="tg-4a1m" colspan="7">
+		<table class="tg" style="width:100%">
+		<tr>
+			<td class="tg-4a1m">@@box_service Service :</td>
+			<td class="tg-4a1m">@@box_rtd Round Table Discussion</td>
+			<td class="tg-4a1m">@@box_sym Symposium</td>
+			<td class="tg-4a1m" colspan="2">@@box_expert_meeting Expert Meeting</td>
+		</tr>
+		<tr>
+			<td class="tg-4a1m">@@box_sponsoship Sponsorship :</td>
+			<td class="tg-4a1m">@@box_institutionalevent Institutional Event</td>
+			<td class="tg-4a1m" >@@box_gift_medical_literature_medical_devices Gift, Medical Literature, Medical Devices</td>
+			<td class="tg-4a1m">@@box_sponsoring_event Sponsoring Event</td>
+		</tr>
+		<tr>
+			<td class="tg-4a1m">@@box_edusupport Educational Support</td>
+			<td class="tg-4a1m">@@box_hospital_listing Hospital Listing</td>
+			<td class="tg-4a1m">@@box_product_presentation Product Presentation</td>
+			<td class="tg-4a1m">@@box_kerjasama_lain Lainnya :</td>
+		</tr>
+		</table>
+	</td>
+  </tr>
+  <tr>
+    <td class="tg-u5xp" colspan="7">JUSTIFIKASI DAN OBJEKTIF</td>
+  </tr>
+  <tr>
+	<td class="tg-4a1m" colspan="7">
+		<table class="tg" style="width:100%">
+			<tr>
+				<td class="tg-4a1m"><b>Pemilihan HCP untuk Sponsorship</b></td>
+				<td class="tg-4a1m"><b>Pemilihan HCP sebagai Speaker</b></td>
+			<tr>
+			<tr>
+				<td class="tg-4a1m">@@box_Membantu_HCP_mendapat_informasi_kedokteran_terbaru Membantu HCP mendapat informasi kedokteran terbaru</td>
+				<td class="tg-4a1m">@@box_Kemampuan_dan_keahlian_yang_kompeten_sesuai_topik_acara Kemampuan dan keahlian yang kompeten sesuai topik acara</td>
+			<tr>
+			<tr>
+				<td class="tg-4a1m">@@box_Update_dan_meningkatkan_pengetahuan_dan_keterampilan_HCP Update dan meningkatkan pengetahuan dan keterampilan HCP</td>
+				<td class="tg-4a1m">@@box_Telah_menjadi_pembicara_dalam_berbagai_acara_ilmiah Telah menjadi pembicara dalam berbagai acara ilmiah</td>
+			<tr>
+			<tr>
+				<td class="tg-4a1m">@@box_Menyebarkan_pengetahuan_terbaru_dibidang_kedokteran Menyebarkan pengetahuan terbaru dibidang kedokteran</td>
+				<td class="tg-4a1m">@@box_speaker_other_reason Lainnya : @@speaker_other_reason</td>
+			<tr>
+			<tr>
+				<td class="tg-4a1m">@@box_sponsorship_other_reason Lainnya  :@@sponsorship_other_reason</td>
+				<td class="tg-4a1m">@@box_speaker_other_reason Lainnya : @@speaker_other_reason</td>
+			<tr>
+			<tr>
+				<td class="tg-4a1m"><b><u>Alasan Pemilihan Lokasi Acara</u></b></td>
+				<td class="tg-4a1m"><b><u>Alasan Pemberian Support ke HCO</u></b></td>
+			<tr>
+			<tr>
+				<td class="tg-4a1m">@@box_Tempat_yang_tepat_dan_mempunyai_fasilitas_yang_baik_untuk_acara_ilmiah_kedokteran Tempat yang tepat & mempunyai fasilitas yang baik untuk acara ilmiah kedokteran</td>
+				<td class="tg-4a1m">@@box_Team_kegiatan_sesuai_dengna_produk_portfolio Team kegiatan sesuai dengna produk portfolio</td>
+			<tr>
+			<tr>
+				<td class="tg-4a1m">@@box_Lokasi_mudah_dijangkau_bagi_peserta Lokasi mudah dijangkau bagi peserta</td>
+				<td class="tg-4a1m">@@box_HCO_ditunjuk_oleh_asosiasi HCO ditunjuk oleh asosiasi</td>
+			<tr>
+			<tr>
+				<td class="tg-4a1m">@@box_Sudah_ditentukan_oleh_Institusi_atau_Panitia_Penyelenggara Sudah ditentukan oleh Institusi / Panitia Penyelenggara</td>
+				<td class="tg-4a1m">@@box_alasan_hco_lain Lainnya  : @@alasan_hco_lain_text</td>
+			<tr>
+			<tr>
+				<td class="tg-4a1m">@@box_alasan_lokasi_lain Lainnya  : @@alasan_lokasi_lain_text</td>
+				<td class="tg-4a1m">&nbsp;</td>
+			<tr>	
+		</table>
+	</td>
+  <tr>
+  <tr>
+    <td class="tg-u5xp" colspan="7">PERKIRAAN BIAYA</td>
+  </tr>
+  <tr>
+	<td class="tg-4a1m" colspan="7">
+		<table class="tg" style="width:100%">
+			<tr>
+				<td class="tg-u5xp" style="text-align:center">NAMA AKTIVITAS</td>
+				<td class="tg-u5xp" style="text-align:center">KETERANGAN</td>
+				<td class="tg-u5xp" style="text-align:center">BIAYA (IDR)</td>
+			</tr>
+			<tr>
+				<td class="tg-4a1m">Sponsorship HCP (Lokal & Internasional): </td>
+				<td class="tg-4a1m">@@sponsorship_venue_country_type</td>
+				<td class="tg-4a1m"></td>
+			</tr>
+			<tr>
+				<td class="tg-4a1m">Registrasi @@box_tick_sympo Symposium @@box_tick_workshop Workshop</td>
+				<td class="tg-4a1m"></td>
+				<td class="tg-4a1m">@@amount_registration</td>
+			</tr>
+			<tr>
+				<td class="tg-4a1m">Akomodasi</td>
+				<td class="tg-4a1m"></td>
+				<td class="tg-4a1m">@@amount_accomodation</td>
+			</tr>
+			<tr>
+				<td class="tg-4a1m">Transportasi Udara</td>
+				<td class="tg-4a1m"></td>
+				<td class="tg-4a1m">@@amount_airtransport</td>
+			</tr>
+			<tr>
+				<td class="tg-4a1m">Transportasi Darat</td>
+				<td class="tg-4a1m"></td>
+				<td class="tg-4a1m">@@amount_groundtransport</td>
+			</tr>
+			<tr>
+				<td class="tg-4a1m">Visa, Insurance (jika merupakan persyaratan)</td>
+				<td class="tg-4a1m"></td>
+				<td class="tg-4a1m">@@amount_visa_insurance</td>
+			</tr>
+			<tr>
+				<td class="tg-4a1m">RTD & PP - Biaya Makan / Meeting package</td>
+				<td class="tg-4a1m">&nbsp; @@pax_gp GP @@pax_specialist Spesialis @@pax_non_doctor Non Dokter &nbsp;&nbsp;Total Jumlah Peserta = @@pax_total Pax</td>
+				<td class="tg-4a1m">@@amount_meals</td>
+			</tr>
+			<tr>
+				<td class="tg-4a1m">Service Fee / Moderator Fee</i></td>
+				<td class="tg-4a1m"></td>
+				<td class="tg-4a1m">@@amount_service</td>
+			</tr>
+			<tr>
+				<td class="tg-4a1m">Biaya Institusi / Panitia Event</i></td>
+				<td class="tg-4a1m"></td>
+				<td class="tg-4a1m">@@amount_institution</td>
+			</tr>
+			<tr>
+				<td class="tg-4a1m">Biaya 3rd Party (Booth, EO, dll)</i></td>
+				<td class="tg-4a1m"></td>
+				<td class="tg-4a1m">@@amount_3rdparty</td>
+			</tr>
+			<tr>
+				<td class="tg-4a1m">Biaya Operational Kegiatan</i></td>
+				<td class="tg-4a1m"></td>
+				<td class="tg-4a1m">@@amount_event_operational</td>
+			</tr>
+			<tr>
+				<td class="tg-4a1m">Business Meeting (untuk event)</i></td>
+				<td class="tg-4a1m"></td>
+				<td class="tg-4a1m">@@amount_businessmeeting</td>
+			</tr>
+			<tr>
+				<td class="tg-4a1m">Hospital Listing</i></td>
+				<td class="tg-4a1m"></td>
+				<td class="tg-4a1m">@@amount_hospitallisting</td>
+			</tr>
+			<tr>
+				<td class="tg-4a1m">Hadiah (Berkaitan dengan kebudayaan)</i></td>
+				<td class="tg-4a1m"></td>
+				<td class="tg-4a1m">@@amount_gift</td>
+			</tr>
+			<tr>
+				<td class="tg-4a1m">Support Literatur Medis</i></td>
+				<td class="tg-4a1m"></td>
+				<td class="tg-4a1m">@@amount_literatur_medis</td>
+			</tr>
+			<tr>
+				<td class="tg-4a1m">Support Alat Kesehatan</i></td>
+				<td class="tg-4a1m"></td>
+				<td class="tg-4a1m">@@amount_medicaldevices</td>
+			</tr>
+			<tr>
+				<td class="tg-4a1m">Other</i></td>
+				<td class="tg-4a1m"></td>
+				<td class="tg-4a1m"></td>
+			</tr>
+			<tr>
+				<td class="tg-u5xp" style="text-align:center" colspan="2">TOTAL</td>
+				<td class="tg-4a1m">@@amount_total</td>
+			</tr>
+		</table>
+	</td>
+  </tr>
+  <tr>
+    <td class="tg-u5xp" colspan="7">COST CENTER</td>
+  </tr>
+  <tr>
+	<td class="tg-4a1m" colspan="7">
+		<table class="tg" style="width:100%">
+			<tr>
+				<td class="tg-u5xp">Division</td>
+			</tr>
+			<tr>
+				<td class="tg-4a1m">
+					<table class="tg" style="width:100%">
+						<tr>
+							<td class="tg-4a1m">@@box_sales Sales: </td>
+							<td class="tg-4a1m">@@box_cc BU - CC @@percent_cc % </td>
+							<td class="tg-4a1m">&nbsp;</td>
+							<td class="tg-4a1m">@@box_mkt Marketing: </td>
+							<td class="tg-4a1m">@@box_ivt IVT @@percent_ivt % </td>
+							<td class="tg-4a1m">@@box_ivd IVD @@percent_ivd % </td>
+							<td class="tg-4a1m">@@box_onco ONCO @@percent_onco % </td>
+							<td class="tg-4a1m">@@box_renal Renal @@percent_renal % </td>
+							<td class="tg-4a1m">@@box_broadmarket Broad Market @@percent_broadmarket % </td>
+						</tr>
+						<tr>
+							<td class="tg-4a1m">&nbsp;</td>
+							<td class="tg-4a1m">@@box_bm BU - BM @@percent_bm % </td>
+							<td class="tg-4a1m">&nbsp;</td>
+							<td class="tg-4a1m">&nbsp;</td>
+							<td class="tg-4a1m">@@box_pn PN @@percent_pn % </td>
+							<td class="tg-4a1m">@@box_en EN @@percent_en % </td>
+							<td class="tg-4a1m">@@box_mdtt Renal @@percent_mdtt % </td>
+							<td class="tg-4a1m" colspan="2">@@box_mdad Broad @@percent_mdad % </td>
+						</tr>
+					</table>
+				</td>
+			</tr>
+		</table>
+	</td>
+  </tr>
+  <tr>
+    <td class="tg-u5xp" colspan="7">APPROVAL</td>
+  </tr>
+  <tr>
+    <td class="tg-4a1m" colspan="7">
+    	<table class="tg" style="width:100%">
+    		<tr>
+    			<td class="tg-4a1m">Untuk Aktifitas Sponsorship (Lokal)</td>
+    			<td class="tg-4a1m">&nbsp;</td>
+    			<td class="tg-4a1m">Speaker Engagement Intl, Intl Event, Layman</td>
+    		</tr>
+    		<tr>
+    			<td class="tg-4a1m">
+    				<table class="tg" style="width:100%"
+    					<tr>
+    						<td class="tg-4a1m" align="center">Proposed By</td>
+    						<td class="tg-4a1m" align="center">Approved By</td>
+    						<td class="tg-4a1m" align="center">Approved By</td>
+    						<td class="tg-4a1m" align="center">Approved By</td>
+    					</tr>
+    					<tr>
+    						<td class="tg-4a1m" align="center" height="50">@@stimestamp_requestor</td>
+    						<td class="tg-4a1m" align="center">@@timestamp_mm_sm</td>
+    						<td class="tg-4a1m" align="center">@@timestamp_bu</td>
+    						<td class="tg-4a1m" align="center">@@timestamp_ceo</td>
+    					</tr>
+    					<tr>
+    						<td class="tg-4a1m" align="center">MR / DM / PM</td>
+    						<td class="tg-4a1m" align="center">MM / SM</td>
+    						<td class="tg-4a1m" align="center">BU Head</td>
+    						<td class="tg-4a1m" align="center">CEO</td>
+    					</tr>
+    				</table>
+    			</td>
+    			<td class="tg-4a1m">&nbsp;</td>
+    			<td class="tg-4a1m">
+    				<table class="tg" style="width:100%"
+    					<tr>
+    						<td class="tg-4a1m" align="center">Approved By</td>
+    						<td class="tg-4a1m" align="center">Approved By</td>
+    					</tr>
+    					<tr>
+    						<td class="tg-4a1m" align="center" height="50">@@timestamp_compliance</td>
+    						<td class="tg-4a1m" align="center">@@timestamp_ceo</td>
+    					</tr>
+    					<tr>
+    						<td class="tg-4a1m" align="center">Compliance Head</td>
+    						<td class="tg-4a1m" align="center">CEO</td>
+    					</tr>
+    				</table>
+    			</td>
+    		</tr>
+    	</table>
+    </td>
+  </tr>
+  <tr>
+    <td class="tg-u5xp" colspan="7">INSTRUKSI TRANSFER</td>
+  </tr>
+  <tr>
+	<td class="tg-4a1m" colspan="7">
+		<table class="tg" style="width:100%">
+			<tr>
+				<td class="tg-4a1m">
+					<table class="tg" style="width:100%">
+						<tr>
+							<td class="tg-4a1m">Jumlah</td><td class="tg-4a1m">:</td><td class="tg-4a1m">Rp.____________________</td>
+						</tr>
+						<tr>
+							<td class="tg-4a1m">Tgl Transfer</td><td class="tg-4a1m">:</td><td class="tg-4a1m">____/____________/______</td>
+						</tr>
+						<tr>
+							<td class="tg-4a1m">Nama di Rek</td><td class="tg-4a1m">:</td><td class="tg-4a1m">_______________________</td>
+						</tr>
+						<tr>
+							<td class="tg-4a1m">No. Rek</td><td class="tg-4a1m">:</td><td class="tg-4a1m">_______________________</td>
+						</tr>
+						<tr>
+							<td class="tg-4a1m">Nama Bank</td><td class="tg-4a1m">:</td><td class="tg-4a1m">_______________________</td>
+						</tr>
+						<tr>
+							<td class="tg-4a1m">Cabang</td><td class="tg-4a1m">:</td><td class="tg-4a1m">_______________________</td>
+						</tr>
+					</table>
+				</td>
+				<td class="tg-4a1m">
+					<table class="tg" style="width:100%">
+						<tr>
+							<td class="tg-4a1m">Jumlah</td><td class="tg-4a1m">:</td><td class="tg-4a1m">Rp.____________________</td>
+						</tr>
+						<tr>
+							<td class="tg-4a1m">Tgl Transfer</td><td class="tg-4a1m">:</td><td class="tg-4a1m">____/____________/______</td>
+						</tr>
+						<tr>
+							<td class="tg-4a1m">Nama di Rek</td><td class="tg-4a1m">:</td><td class="tg-4a1m">_______________________</td>
+						</tr>
+						<tr>
+							<td class="tg-4a1m">No. Rek</td><td class="tg-4a1m">:</td><td class="tg-4a1m">_______________________</td>
+						</tr>
+						<tr>
+							<td class="tg-4a1m">Nama Bank</td><td class="tg-4a1m">:</td><td class="tg-4a1m">_______________________</td>
+						</tr>
+						<tr>
+							<td class="tg-4a1m">Cabang</td><td class="tg-4a1m">:</td><td class="tg-4a1m">_______________________</td>
+						</tr>
+					</table>
+				</td>
+				<td class="tg-4a1m">
+					<table class="tg" style="width:100%">
+						<tr>
+							<td class="tg-4a1m">Jumlah</td><td class="tg-4a1m">:</td><td class="tg-4a1m">Rp.____________________</td>
+						</tr>
+						<tr>
+							<td class="tg-4a1m">Tgl Transfer</td><td class="tg-4a1m">:</td><td class="tg-4a1m">____/____________/______</td>
+						</tr>
+						<tr>
+							<td class="tg-4a1m">Nama di Rek</td><td class="tg-4a1m">:</td><td class="tg-4a1m">_______________________</td>
+						</tr>
+						<tr>
+							<td class="tg-4a1m">No. Rek</td><td class="tg-4a1m">:</td><td class="tg-4a1m">_______________________</td>
+						</tr>
+						<tr>
+							<td class="tg-4a1m">Nama Bank</td><td class="tg-4a1m">:</td><td class="tg-4a1m">_______________________</td>
+						</tr>
+						<tr>
+							<td class="tg-4a1m">Cabang</td><td class="tg-4a1m">:</td><td class="tg-4a1m">_______________________</td>
+						</tr>
+					</table>
+				</td>
+			</tr>
+		</table>
+	</td>
+  </tr>
+</table>

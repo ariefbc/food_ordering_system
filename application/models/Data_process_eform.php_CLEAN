@@ -1,0 +1,1393 @@
+<?php
+
+class Data_process_eform extends CI_Model {
+	
+	private $tablename = 'reflanguagecountry';
+		
+	function __construct() {
+		parent::__construct();
+		$this->load->model('data_process_timeset','datetime',TRUE);
+		$this->load->library('Wf','',TRUE);
+		$this->load->library('app_initializer','','app_init');
+	}
+	
+	function get_user_fullname($username){
+		$current_conn = $this->db;
+		$current_db = $current_conn->database;
+		$app_init = $this->app_init->app_init();
+		$applat_db = $app_init['applat_db_name'];
+		
+		$this->db->query('use '.$applat_db);
+
+		$this->db->select('fullname');
+		$this->db->where('username', $username);
+		$this->db->from('refnoncoreusers');
+		
+		$tmp = $this->db->get()->result()[0]->fullname;
+
+		$this->db->query('use '.$current_db);
+
+		return $tmp;
+	}
+
+	function get_extended_field_default_value($form_field_id) {
+		/////////////////// Get extended field for default value //////////////////////////////////////////
+		$current_conn = $this->db;
+		$current_db = $current_conn->database;
+		$app_init = $this->app_init->app_init();
+		$applat_db = $app_init['applat_db_name'];
+		
+		$this->db->query('use '.$applat_db);
+
+		$this->db->select('extended_components_field_name,extended_components_full_table_name');
+		$this->db->from('v_extended_field_default_value');
+		$this->db->where('Id', $form_field_id);
+		
+		$query =  $this->db->get()->result();
+
+		$this->db->query('use '.$current_db);
+
+		return $query;
+		////////////////////////////////////////////////////////////////////////////////////////////////
+	}
+
+	function get_extended_default_value($extended_data_id,$extended_field_default_value) {
+		$tmp = NULL;
+
+		$extended_components_field_name = $extended_field_default_value[0]->extended_components_field_name;
+		$extended_components_full_table_name = $extended_field_default_value[0]->extended_components_full_table_name;
+
+		$this->db->select($extended_components_field_name);
+		$this->db->from($extended_components_full_table_name);
+		$this->db->where('Id', $extended_data_id);
+		
+		$query =  $this->db->get()->result();
+
+		if ($query) {
+			$tmp = $query[0]->$extended_components_field_name;
+		}
+
+		return $tmp;
+	}
+
+	function clear_existing_data_checkbox($formtype,$checkbox_table_name,$data_menu,$data_id) {
+		if ($formtype == 'mainform'){ $table_name = $data_menu['full_table_name'];}
+		if ($formtype == 'subform'){
+			$query = $this->get_data_subform($data_menu['id'],$subform_name);
+			$row = $query[0];
+			$table_name = $row->full_table_name;
+		}
+
+		$this->db->where($table_name.'_id', $data_id);
+   		$this->db->delete($checkbox_table_name); 		
+	}
+
+	function get_data_checkbox($formtype,$checkbox_table_name,$data_menu,$data_id,$checkbox_selections_origin_table) {
+		if ($formtype == 'mainform'){ $table_name = $data_menu['full_table_name'];}
+		if ($formtype == 'subform'){
+			$query = $this->get_data_subform($data_menu['id'],$subform_name);
+			$row = $query[0];
+			$table_name = $row->full_table_name;
+		}
+
+		$this->db->select($checkbox_selections_origin_table.'_id');
+		$this->db->where($table_name.'_id', $data_id);
+		$this->db->from($checkbox_table_name);
+		
+		$tmp = array();
+		foreach ($this->db->get()->result_array() as $key => $value) {
+			$tmp[] = $value[$checkbox_selections_origin_table.'_id'];
+		}
+		
+		return $tmp;
+	}
+
+	function new_data_checkbox($datasession,$formtype,$checkbox_table_name,$data_menu,$data_id,$checkbox_selections_origin_table,$checkbox_value_array) {
+
+		if ($formtype == 'mainform'){ $table_name = $data_menu['full_table_name'];}
+		if ($formtype == 'subform'){
+			$query = $this->get_data_subform($data_menu['id'],$subform_name);
+			$row = $query[0];
+			$table_name = $row->full_table_name;
+		}
+
+		foreach ($checkbox_value_array as $key => $value) {
+			$data = array(
+					$table_name.'_id' => $data_id,
+					$checkbox_selections_origin_table.'_id' =>$value, 
+			        'createby' => $datasession['username'],
+	        		'createdate' => $this->datetime->get_current_datetime(),
+	        		'isdelete' => 0
+			);
+
+			$this->db->insert($checkbox_table_name, $data);
+		}
+	}
+
+	function look_up_value($look_up_data){
+		$component_id = $look_up_data['component_id'];
+		$value = $look_up_data['value'];
+		
+		///////// Get ID Field Source as data selection items /////////////////////
+		$current_conn = $this->db;
+		$current_db = $current_conn->database;
+		$app_init = $this->app_init->app_init();
+		$applat_db = $app_init['applat_db_name'];
+		
+		$this->db->query('use '.$applat_db);
+
+		$this->db->select('component_id_data');
+		$this->db->where('form_component_id', $component_id);
+		$this->db->from('refselectiondata');
+		
+		$row = array();
+		$row =  $this->db->get()->result()[0];
+
+		$this->db->query('use '.$current_db);
+
+		$source_field_id = $row->component_id_data;
+		///////////////////////////////////////////////////////////////////////////////////////////////
+		
+		///////// Get field & table name of data selection items source ///////
+		$current_conn = $this->db;
+		$current_db = $current_conn->database;
+		$app_init = $this->app_init->app_init();
+		$applat_db = $app_init['applat_db_name'];
+		
+		$this->db->query('use '.$applat_db);
+
+		$this->db->select('field_name,full_table_name,sub_form_id');
+		$this->db->from('refforms');
+		$this->db->join('refmenu','refmenu.Id = refforms.menu_id');
+		$this->db->where('refforms.Id', $source_field_id);
+		
+		$row = array();
+		$row =  $this->db->get()->result()[0];
+
+		$this->db->query('use '.$current_db);
+
+		$field_name = $row->field_name;
+		$table_name = $row->full_table_name;
+
+		if ($row->sub_form_id != NULL) {
+			$current_conn = $this->db;
+			$current_db = $current_conn->database;
+			$app_init = $this->app_init->app_init();
+			$applat_db = $app_init['applat_db_name'];
+			
+			$this->db->query('use '.$applat_db);
+
+			$this->db->select('full_table_name');
+			$this->db->from('refsubform_menu');
+			$this->db->where('refsubform_menu.Id', $row->sub_form_id);
+			
+			$row = array();
+			$row =  $this->db->get()->result()[0];
+
+			$this->db->query('use '.$current_db);
+
+			$table_name = $row->full_table_name;
+		}
+		//////////////////////////////////////////////////////////////////////////////////////////////
+		
+		//////// Return value from table of selected dropdown ///////////////////
+		$this->db->select($field_name);
+		$this->db->from($table_name);
+		$this->db->where('Id', $value);
+		
+		$query = $this->db->get()->result();
+		if (count($query) >= 1){
+			$row = array();
+			$row =  $query[0];
+			return $row->$field_name;	
+		}
+			return '';
+		//////////////////////////////////////////////////////////////////////////////////////////////
+	}
+	
+	function look_up_item($look_up_item){
+		$component_id = $look_up_item['component_id'];
+		$value = $look_up_item['value'];
+		
+		//////// Return value from item selection table of selected dropdown ///////////////////
+		$current_conn = $this->db;
+		$current_db = $current_conn->database;
+		$app_init = $this->app_init->app_init();
+		$applat_db = $app_init['applat_db_name'];
+		
+		$this->db->query('use '.$applat_db);
+
+		$this->db->select('item_text');
+		$this->db->from('refselectionitems');
+		$this->db->where('item_value', $value);
+		$this->db->where('form_component_id', $component_id);
+		
+		$query = $this->db->get()->result();
+
+		$this->db->query('use '.$current_db);
+
+		if (count($query) >= 1){
+			$row = array();
+			$row =  $query[0];
+			return $row->item_text;	
+		}
+			return '';
+		//////////////////////////////////////////////////////////////////////////////////////////////
+	}
+
+	function look_up_user($look_up_user){
+		$value = $look_up_user['value'];
+		
+		//////// Return value from item selection table of selected dropdown ///////////////////
+		$current_conn = $this->db;
+		$current_db = $current_conn->database;
+		$app_init = $this->app_init->app_init();
+		$applat_db = $app_init['applat_db_name'];
+		
+		$this->db->query('use '.$applat_db);
+
+		$this->db->select('fullname');
+		$this->db->from('v_menu');
+		$this->db->where('user_id', $value);
+		
+		$query = $this->db->get()->result();
+
+		$this->db->query('use '.$current_db);
+
+		if (count($query) >= 1){
+			$row = array();
+			$row =  $query[0];
+			return $row->fullname;	
+		}
+			return '';
+		//////////////////////////////////////////////////////////////////////////////////////////////
+	}
+	
+	function get_data_parent_menu($menu_id){
+		$title_parent = '';
+		
+		$current_conn = $this->db;
+		$current_db = $current_conn->database;
+		$app_init = $this->app_init->app_init();
+		$applat_db = $app_init['applat_db_name'];
+		
+		$this->db->query('use '.$applat_db);
+
+		$this->db->select('title');
+		$this->db->where('Id', $menu_id);
+		
+		$query =  $this->db->get('refmenu')->result();
+
+		$this->db->query('use '.$current_db);
+		
+		if (count($query) >=1){
+			$row = $query[0];
+			$title_parent = $row->title;
+		}
+		
+		return $title_parent;
+	}
+	
+	function get_data_specific_component($component_id){
+		$current_conn = $this->db;
+		$current_db = $current_conn->database;
+		$app_init = $this->app_init->app_init();
+		$applat_db = $app_init['applat_db_name'];
+		
+		$this->db->query('use '.$applat_db);
+
+		$this->db->select();
+		$this->db->where('Id', $component_id);
+		$this->db->from('refforms');
+		
+		$tmp = $this->db->get()->result();
+
+		$this->db->query('use '.$current_db);
+
+		return  $tmp;
+	}
+	
+	function get_extended_data_detail($full_table_name,$data_id,$is_data_subform,$search_by_column = 'Id'){
+		$this->db->select();
+		$this->db->from($full_table_name);
+		if (!$is_data_subform){
+			$this->db->where('Id',$data_id);	
+		}else{
+			$this->db->where($search_by_column,$data_id);
+		}
+		
+		return  $this->db->get()->result();
+	}
+	
+	function get_data_menu($menu_id){
+		$tmp['id'] = '';
+		$tmp['title'] = '';
+		$tmp['title_parent'] = '';
+		$tmp['full_table_name'] = '';
+		$tmp['app_code'] = '';
+		$tmp['is_masterdata'] = NULL;
+		$tmp['is_workflowdata'] = NULL;
+		$tmp['is_transdata'] = NULL;
+		$tmp['is_report'] = NULL ;
+		$tmp['is_approval'] = NULL ;
+		$tmp['url'] = NULL ;
+		
+		$current_conn = $this->db;
+		$current_db = $current_conn->database;
+		$app_init = $this->app_init->app_init();
+		$applat_db = $app_init['applat_db_name'];
+		
+		$this->db->query('use '.$applat_db);
+		
+		$this->db->select('refmenu.Id');
+		$this->db->select('title,parent_id,full_table_name,app_code,is_masterdata,is_workflowdata,is_transdata,is_report,is_approval,url');
+		$this->db->where('url', $menu_id);
+		$this->db->or_where('refmenu.Id', $menu_id);
+		$this->db->from('refmenu');
+		$this->db->join('refapps','refapps.Id = refmenu.app_id');
+		
+		$query =  $this->db->get()->result();
+		
+		$this->db->query('use '.$current_db);
+		
+		if (count($query) >=1){
+			$row = $query[0];
+			$tmp['id'] = $row->Id;
+			$tmp['title'] = $row->title;
+			$tmp['title_parent'] = $this->get_data_parent_menu($row->parent_id);
+			$tmp['full_table_name'] = $row->full_table_name;
+			$tmp['app_code'] = $row->app_code;
+			$tmp['is_masterdata'] = $row->is_masterdata;
+			$tmp['is_workflowdata'] = $row->is_workflowdata;
+			$tmp['is_transdata'] = $row->is_transdata;
+			$tmp['is_report'] = $row->is_report;
+			$tmp['is_approval'] = $row->is_approval;
+			$tmp['url'] = $row->url;
+		}
+		
+		return $tmp;
+	}
+	
+	function count_rows($data_menu,$datapost,$formtype,$subform_name){
+		$count_field = 0;
+
+		$processed_requests_id = '-1';
+
+		$query = $this->get_grid_fields($data_menu,$formtype,$subform_name);
+
+		/// search within extended field //////////////
+		$extended_field_search_string = '';
+
+		if ($datapost['search'] != ''){
+			foreach ($query as $row) {
+				$extended_field_search = '';
+				if (is_numeric($row->field_name)){
+					$extended_field_id = $row->field_name;
+
+					$current_conn = $this->db;
+					$current_db = $current_conn->database;
+					$app_init = $this->app_init->app_init();
+					$applat_db = $app_init['applat_db_name'];
+					
+					$this->db->query('use '.$applat_db);
+
+					$this->db->select('full_table_name,field_name');
+					$this->db->from('refforms');
+					$this->db->join('refmenu','refmenu.Id = refforms.menu_id');
+					$this->db->where('refforms.Id',$extended_field_id);
+					$this->db->where('field_type','varchar');
+
+					$query_extended_table = $this->db->get()->result();
+
+					$this->db->query('use '.$current_db);
+
+					if (count($query_extended_table) == 1){
+						$this->db->select('Id');
+						$this->db->from($query_extended_table[0]->full_table_name);
+						$this->db->like($query_extended_table[0]->field_name,$datapost['search']);
+
+						$query_extended_search_result = $this->db->get()->result();
+
+						foreach ($query_extended_search_result as $row_extended_result) {
+							$extended_field_search = ($extended_field_search == '')? $row_extended_result->Id : $extended_field_search.','.$row_extended_result->Id;
+						}
+
+						if ($extended_field_search != '') {
+							$extended_field_search = $query_extended_table[0]->full_table_name.'_id in ('.$extended_field_search.')';
+							
+							$extended_field_search_string = ($extended_field_search_string == '')? $extended_field_search : $extended_field_search_string.' or '.$extended_field_search;
+						}
+					}
+				}
+			}
+		}
+		///////////////////////////////////////////////
+		
+		$this->db->select($data_menu['full_table_name'].'.Id');
+		$this->db->group_start();
+		foreach ($query as $row){
+			if (!is_numeric($row->field_name)) {
+				$count_field++;
+			
+				if ($count_field == 1) $this->db->like($data_menu['full_table_name'].'.'.$row->field_name,$datapost['search']); else $this->db->or_like($data_menu['full_table_name'].'.'.$row->field_name,$datapost['search']);
+			}
+		}
+
+		if ($datapost['search'] != '' && $extended_field_search_string != ''){
+			$this->db->or_where($extended_field_search_string,NULL);
+		}
+		
+		$this->db->group_end();
+		$this->db->where($data_menu['full_table_name'].'.isdelete', 0);
+
+		return count($this->db->get($data_menu['full_table_name'])->result_array());
+	}
+
+	function get_selectiondatatableitems($form_component_id,$data_menu = array(),$main_id = 0){
+		/////////////////// Get ID data for selection //////////////////////////////////////////
+		$current_conn = $this->db;
+		$current_db = $current_conn->database;
+		$app_init = $this->app_init->app_init();
+		$applat_db = $app_init['applat_db_name'];
+		
+		$this->db->query('use '.$applat_db);
+
+		$this->db->select('component_id_data');
+		$this->db->from('refselectiondata');
+		$this->db->where('refselectiondata.form_component_id', $form_component_id);
+		$this->db->where('refselectiondata.isdelete', 0);
+		
+		$query =  $this->db->get()->result();
+
+		$this->db->query('use '.$current_db);
+
+		$component_id_data = $query[0]->component_id_data;
+		////////////////////////////////////////////////////////////////////////////////////////////////
+		
+		/////////////////// Get ID field name and table ////////////////////////////////////
+		$current_conn = $this->db;
+		$current_db = $current_conn->database;
+		$app_init = $this->app_init->app_init();
+		$applat_db = $app_init['applat_db_name'];
+		
+		$this->db->query('use '.$applat_db);
+
+		$this->db->select('field_name,full_table_name,sub_form_id');
+		$this->db->from('refforms');
+		$this->db->join('refmenu','refmenu.Id = refforms.menu_id');
+		$this->db->where('refforms.Id', $component_id_data);
+		$this->db->where('refforms.isdelete', 0);
+		
+		$query = array();
+		$query =  $this->db->get()->result();
+
+		$this->db->query('use '.$current_db);
+		
+		$field_name = $query[0]->field_name;
+		$full_table_name = $query[0]->full_table_name;
+
+		if ($query[0]->sub_form_id != NULL) {
+			$current_conn = $this->db;
+			$current_db = $current_conn->database;
+			$app_init = $this->app_init->app_init();
+			$applat_db = $app_init['applat_db_name'];
+			
+			$this->db->query('use '.$applat_db);
+
+			$this->db->select('field_name,full_table_name,sub_form_id');
+			$this->db->from('refforms');
+			$this->db->join('refsubform_menu','refsubform_menu.Id = refforms.sub_form_id');
+			$this->db->where('refforms.Id', $component_id_data);
+			$this->db->where('refforms.isdelete', 0);
+
+			$query = array();
+			$query =  $this->db->get()->result();
+			$field_name = $query[0]->field_name;
+			$full_table_name = $query[0]->full_table_name;
+
+			$this->db->query('use '.$current_db);
+		}
+		
+		////////////////////////////////////////////////////////////////////////////////////////////////
+		
+		/////////////////// Get Data ///////////////////////////////////////////////////////////////
+		$query = array();
+
+		$this->db->select($full_table_name.'.Id as item_value,'.$full_table_name.'.'.$field_name.' as item_text');
+		
+		$this->db->from($full_table_name);
+		
+		$this->db->where($full_table_name.'.isdelete', 0);
+		$this->db->order_by($full_table_name.'.'.$field_name,'ASC');
+
+		$query['query'] =  $this->db->get()->result();
+		////////////////////////////////////////////////////////////////////////////////////////////////
+		
+		return $query;
+	}
+	
+	function get_selectiondatataappusers($app_id){
+		
+		/////////////////// Get App User Data ///////////////////////////////////////////////////////////////
+		$current_conn = $this->db;
+		$current_db = $current_conn->database;
+		$app_init = $this->app_init->app_init();
+		$applat_db = $app_init['applat_db_name'];
+		
+		$this->db->query('use '.$applat_db);
+
+		$this->db->select('user_id as item_value, fullname as item_text');
+		$this->db->from('v_menu');
+		$this->db->where('app_id', $app_id);
+		$this->db->order_by('fullname','ASC');
+		
+		$query = array();
+		$query =  $this->db->get()->result();
+
+		$this->db->query('use '.$current_db);
+		////////////////////////////////////////////////////////////////////////////////////////////////
+		
+		return $query;
+	}
+	
+	function get_selectionitems($form_component_id){
+		$current_conn = $this->db;
+		$current_db = $current_conn->database;
+		$app_init = $this->app_init->app_init();
+		$applat_db = $app_init['applat_db_name'];
+		
+		$this->db->query('use '.$applat_db);
+
+		$this->db->select('item_value,item_text');
+		$this->db->from('refselectionitems');
+		$this->db->where('refselectionitems.form_component_id', $form_component_id);
+		$this->db->where('refselectionitems.isdelete', 0);
+		$this->db->order_by('refselectionitems.order_index','ASC');
+		
+		$tmp = $this->db->get()->result();
+
+		$this->db->query('use '.$current_db);
+		
+		return $tmp;
+	}
+	
+	function get_draft_id($full_table_name){
+		$draft_id = 0;
+		$not_exist = FALSE;
+		
+		while(!$not_exist){
+			$draft_id = mt_rand();
+			$this->db->select('Id');
+			$this->db->from($full_table_name);
+			$this->db->where($full_table_name.'.draft_id', $draft_id);
+			$this->db->where($full_table_name.'.isdelete', 0);
+			
+			$query =  $this->db->get()->result();
+			if (count($query) >= 1) $not_exist = FALSE; else $not_exist = TRUE;	
+		}
+		return $draft_id;
+	}	
+	
+	function get_form_fields_for_data_processing($menu_id,$formtype,$task,$data_id,$sub_form_name = ''){
+		$sub_form_id = 0;
+		
+		if ($formtype == 'subform'){
+			$current_conn = $this->db;
+			$current_db = $current_conn->database;
+			$app_init = $this->app_init->app_init();
+			$applat_db = $app_init['applat_db_name'];
+			
+			$this->db->query('use '.$applat_db);
+
+			$this->db->select('Id');
+			$this->db->from('refsubform_menu');
+			$this->db->where('refsubform_menu.menu_id', $menu_id);
+			$this->db->where('refsubform_menu.subform_name', str_replace('%20',' ',$sub_form_name));
+			$this->db->where('refsubform_menu.isdelete', 0);
+			
+			$row = $this->db->get()->result()[0];
+
+			$this->db->query('use '.$current_db);
+
+			$sub_form_id = $row->Id;
+		}
+		
+		$current_conn = $this->db;
+		$current_db = $current_conn->database;
+		$app_init = $this->app_init->app_init();
+		$applat_db = $app_init['applat_db_name'];
+		
+		$this->db->query('use '.$applat_db);
+
+		$this->db->select();
+		$this->db->from('refforms');
+		$this->db->where('refforms.menu_id', $menu_id);
+		$this->db->where('refforms.isdelete', 0);
+		$this->db->where('refforms.control_name is not null',NULL);
+		if ($formtype == 'mainform') $this->db->where('refforms.sub_form_id is null', NULL);
+		if ($formtype == 'subform') $this->db->where('refforms.sub_form_id', $sub_form_id);
+
+		$this->db->order_by('refforms.order_index','ASC');
+		
+		$tmp = $this->db->get()->result();
+
+		$this->db->query('use '.$current_db);
+
+		return $tmp;
+	}
+	
+	function get_form_fields($menu_id,$formtype,$task,$data_id,$sub_form_name = ''){
+		$sub_form_id = 0;
+		
+		if ($formtype == 'subform'){
+			$current_conn = $this->db;
+			$current_db = $current_conn->database;
+			$app_init = $this->app_init->app_init();
+			$applat_db = $app_init['applat_db_name'];
+			
+			$this->db->query('use '.$applat_db);
+
+			$this->db->select('Id');
+			$this->db->from('refsubform_menu');
+			$this->db->where('refsubform_menu.menu_id', $menu_id);
+			$this->db->where('refsubform_menu.subform_name', str_replace('%20',' ',$sub_form_name));
+			$this->db->where('refsubform_menu.isdelete', 0);
+			
+			$row = $this->db->get()->result()[0];
+			$sub_form_id = $row->Id;
+
+			$this->db->query('use '.$current_db);
+		}
+		
+		$current_conn = $this->db;
+		$current_db = $current_conn->database;
+		$app_init = $this->app_init->app_init();
+		$applat_db = $app_init['applat_db_name'];
+		
+		$this->db->query('use '.$applat_db);
+
+		$this->db->select();
+		$this->db->from('refforms');
+		$this->db->where('refforms.menu_id', $menu_id);
+		$this->db->where('refforms.isdelete', 0);
+		if ($formtype == 'mainform') $this->db->where('refforms.sub_form_id is null', NULL);
+		if ($formtype == 'subform') $this->db->where('refforms.sub_form_id', $sub_form_id);
+
+		$this->db->order_by('refforms.order_index','ASC');
+		
+		$tmp = $this->db->get()->result();
+
+		$this->db->query('use '.$current_db);
+
+		return $tmp;
+	}
+	
+	function validate_subform_data($data_id,$data_menu,$data_subform,$task){
+		$this->db->select('Id');
+		$this->db->from($data_subform->full_table_name);
+		$this->db->where($data_menu['full_table_name'].'_id', $data_id);
+		$this->db->where('isdelete', 0);
+		
+		$query = $this->db->get()->result();
+		
+		return (count($query) >= 1)? "" : "disabled";
+	}
+	
+	function get_data_subform_by_id($id){
+		$current_conn = $this->db;
+		$current_db = $current_conn->database;
+		$app_init = $this->app_init->app_init();
+		$applat_db = $app_init['applat_db_name'];
+		
+		$this->db->query('use '.$applat_db);
+
+		$this->db->select();
+		$this->db->from('refsubform_menu');
+		$this->db->where('Id', $id);
+		
+		$tmp = $this->db->get()->result();
+
+		$this->db->query('use '.$current_db);
+
+		return $tmp;
+	}
+	
+	function get_data_subform($menu_id,$subform_name = ''){
+		$current_conn = $this->db;
+		$current_db = $current_conn->database;
+		$app_init = $this->app_init->app_init();
+		$applat_db = $app_init['applat_db_name'];
+		
+		$this->db->query('use '.$applat_db);
+
+		$this->db->select();
+		$this->db->from('refsubform_menu');
+		$this->db->where('refsubform_menu.menu_id', $menu_id);
+		$this->db->where('refsubform_menu.isdelete', 0);
+		if ($subform_name != '') { $this->db->where('refsubform_menu.subform_name', str_replace('%20',' ',$subform_name)); }
+		$this->db->order_by('refsubform_menu.order_index','ASC');
+		
+		$tmp = $this->db->get()->result();		
+
+		$this->db->query('use '.$current_db);
+
+		return $tmp;
+	}
+	
+	function get_grid_fields($data_menu,$formtype,$subform_name){
+		
+		if ($formtype == 'subform'){
+			$query = $this->get_data_subform($data_menu['id'],$subform_name);
+			$subform_id = $query[0]->Id;
+		}
+		
+		$current_conn = $this->db;
+		$current_db = $current_conn->database;
+		$app_init = $this->app_init->app_init();
+		$applat_db = $app_init['applat_db_name'];
+		
+		$this->db->query('use '.$applat_db);
+
+		$this->db->select('field_name,field_type,column_header,control_type,item_source,refforms.Id,upload_path');
+
+		$this->db->from('refdatagrid');
+		$this->db->join('refforms','refforms.Id = refdatagrid.form_component_id');
+		$this->db->where('refdatagrid.menu_id', $data_menu['id']);
+		if ($formtype != 'subform'){
+			$this->db->where('refdatagrid.subform_id is null', NULL);	
+		}else{
+			$this->db->where('refdatagrid.subform_id', $subform_id);
+		}
+		$this->db->where('refdatagrid.isdelete', 0);
+		$this->db->where('refforms.isdelete', 0);
+		$this->db->order_by('refdatagrid.order_index','ASC');
+		
+		$tmp = $this->db->get()->result();
+
+		$this->db->query('use '.$current_db);
+
+		return $tmp;
+	}
+	
+	function load_data($data_menu,$datapost,$limit,$offset,$formtype,$subform_name,$main_id){
+		$count_field = 0;
+		$table_name = "";
+
+		if ($formtype != 'subform'){
+			$table_name = $data_menu['full_table_name'];
+		}else{
+			$query = $this->get_data_subform($data_menu['id'],$subform_name);
+			$table_name = $query[0]->full_table_name;
+		}
+		
+		$open_bracket = FALSE;
+		$query = $this->get_grid_fields($data_menu,$formtype,$subform_name);
+
+		/// search within extended field //////////////
+		$extended_field_search_string = '';
+		
+		if ($datapost['search'] != ''){
+			foreach ($query as $row) {
+				$extended_field_search = '';
+				if (is_numeric($row->field_name)){
+					$extended_field_id = $row->field_name;
+
+					$current_conn = $this->db;
+					$current_db = $current_conn->database;
+					$app_init = $this->app_init->app_init();
+					$applat_db = $app_init['applat_db_name'];
+					
+					$this->db->query('use '.$applat_db);
+
+					$this->db->select('full_table_name,field_name');
+					$this->db->from('refforms');
+					$this->db->join('refmenu','refmenu.Id = refforms.menu_id');
+					$this->db->where('refforms.Id',$extended_field_id);
+					$this->db->where('field_type','varchar');
+
+					$query_extended_table = $this->db->get()->result();
+
+					$this->db->query('use '.$current_db);
+
+					if (count($query_extended_table) == 1){
+						$this->db->select('Id');
+						$this->db->from($query_extended_table[0]->full_table_name);
+						$this->db->like($query_extended_table[0]->field_name,$datapost['search']);
+
+						$query_extended_search_result = $this->db->get()->result();
+
+						foreach ($query_extended_search_result as $row_extended_result) {
+							$extended_field_search = ($extended_field_search == '')? $row_extended_result->Id : $extended_field_search.','.$row_extended_result->Id;
+						}
+
+						if ($extended_field_search != '') {
+							$extended_field_search = $query_extended_table[0]->full_table_name.'_id in ('.$extended_field_search.')';
+							
+							$extended_field_search_string = ($extended_field_search_string == '')? $extended_field_search : $extended_field_search_string.' or '.$extended_field_search;
+						}
+					}
+				}
+			}
+		}
+		///////////////////////////////////////////////
+		
+		//$this->db->select('Id');
+		$this->db->select($table_name.'.*');
+		$this->db->from($table_name);
+
+		foreach ($query as $row){
+			
+			//$this->db->select($row->field_name);
+			
+			if ($formtype != 'subform'){
+				if (!$open_bracket){
+					$open_bracket = TRUE;
+					$this->db->group_start();
+				}
+				if (!is_numeric($row->field_name)) {
+					$count_field++;
+					if ($count_field == 1) $this->db->like($table_name.'.'.$row->field_name,$datapost['search']); else $this->db->or_like($table_name.'.'.$row->field_name,$datapost['search']);
+				}
+			}
+		}
+
+		if ($datapost['search'] != '' && $extended_field_search_string != ''){
+			$this->db->or_where($extended_field_search_string,NULL);
+		}
+
+		if ($open_bracket){
+			$this->db->group_end();
+		}
+		$this->db->where($table_name.'.isdelete', 0);
+
+		if ($data_menu['is_workflowdata'] == 1){
+			$datasession = $this->session->userdata('logged_in');
+			///// data requests can only be viewed by the user who created it EXCEPT for admin /////////////////
+			if ($formtype != 'subform'){
+				if ($datasession['username'] != 'admin'){
+					$this->db->where('createby', $datasession['username']);	
+				}
+			}
+			///////////////////////////////////////////////////////////////////////////////////////////
+		}
+		
+		if ($formtype == 'subform'){
+			$this->db->where($data_menu['full_table_name'].'_id', $main_id);
+		}
+		
+		$this->db->limit($limit);
+		$this->db->offset($offset);
+
+		$this->db->order_by('Id','DESC');
+
+		//echo $this->db->get_compiled_select();
+		//exit();
+		return $this->db->get()->result();
+	}
+	
+	function get_data_detail($data_menu,$form_fields,$data_id,$formtype,$subform_name = ''){
+		$tmp = array();
+		$table_name = "";
+		$has_extended_data = FALSE;
+		
+		if ($formtype == 'mainform'){ $table_name = $data_menu['full_table_name'];}
+		if ($formtype == 'subform'){
+			$query = $this->get_data_subform($data_menu['id'],$subform_name);
+			$row = $query[0];
+			$table_name = $row->full_table_name;
+		}
+		
+		$this->db->select('Id,createby');
+		foreach($form_fields as $form_field){
+			if ($form_field->control_type != 'extend'){
+				$tmp[$form_field->field_name] = '';
+				$this->db->select($form_field->field_name);	
+			}else{
+				$has_extended_data = TRUE;
+			}
+		}
+		$this->db->where('isdelete', 0);
+		$this->db->where('Id', $data_id);
+		
+		$query = $this->db->get($table_name)->result();
+		
+		$tmp['Id'] = 0;
+		$tmp['createby'] = '';
+		if (count($query) >= 1){
+			$row = $query[0];
+			$tmp['Id'] = $row->Id;
+			$tmp['createby'] = $row->createby;
+			foreach($form_fields as $form_field){
+				if ($form_field->control_type != 'extend'){
+					$field_name = $form_field->field_name;
+					$tmp[$field_name] = $row->$field_name;
+					if ($form_field->field_type == 'datetime'){
+						if ($tmp[$field_name] != NULL){
+							$tmp[$field_name] = $this->datetime->convert_mysql_date_format_to_short_string($tmp[$field_name]);	
+						}else{
+							$tmp[$field_name] = NULL;
+						}
+						
+					}		
+				}
+			}
+				
+			if ($has_extended_data){
+				if ($this->session->userdata('selection_id') == NULL){
+					$extended_field_id = $this->get_data_extend_from_table($data_menu)['full_table_name'].'_id';
+					
+					$this->db->select($extended_field_id);
+					$this->db->from($table_name);
+					$this->db->where('Id', $data_id);
+					$this->db->limit(1);
+					
+					$query =  $this->db->get()->result();
+					$this->session->set_userdata('selection_id', $query[0]->$extended_field_id);
+				}
+			}
+		}
+		
+		return $tmp;
+	}
+	
+	function check_if_menu_has_extended_data($data_menu){
+		$tmp = FALSE;
+		
+		$current_conn = $this->db;
+		$current_db = $current_conn->database;
+		$app_init = $this->app_init->app_init();
+		$applat_db = $app_init['applat_db_name'];
+		
+		$this->db->query('use '.$applat_db);
+
+		$this->db->select('Id');
+		$this->db->from('refextend_datamenu');
+		$this->db->where('refextend_datamenu.to_menu_id', $data_menu['id']);
+		$this->db->where('refextend_datamenu.isdelete', 0);
+		$this->db->limit(1);
+		
+		$query =  $this->db->get()->result();
+
+		$this->db->query('use '.$current_db);
+		
+		if (count($query) == 1){
+			$tmp = TRUE;
+		}
+		return $tmp;
+	}
+	
+	function get_data_extend_from_table($data_menu){
+		$current_conn = $this->db;
+		$current_db = $current_conn->database;
+		$app_init = $this->app_init->app_init();
+		$applat_db = $app_init['applat_db_name'];
+		
+		$this->db->query('use '.$applat_db);
+
+		$this->db->select('from_menu_id,label,field_name,selection_component_id');
+		$this->db->from('refextend_datamenu');
+		$this->db->join('refforms','refforms.Id = refextend_datamenu.selection_component_id');
+		$this->db->where('refextend_datamenu.to_menu_id', $data_menu['id']);
+		$this->db->where('refextend_datamenu.isdelete', 0);
+		$this->db->limit(1);
+		
+		$query =  $this->db->get()->result();
+
+		$this->db->query('use '.$current_db);
+
+		$from_menu_id = $query[0]->from_menu_id;
+		$tmp['label'] = $query[0]->label;
+		$tmp['field_name'] = $query[0]->field_name;
+		
+		$current_conn = $this->db;
+		$current_db = $current_conn->database;
+		$app_init = $this->app_init->app_init();
+		$applat_db = $app_init['applat_db_name'];
+		
+		$this->db->query('use '.$applat_db);
+
+		$this->db->select();
+		$this->db->from('refmenu');
+		$this->db->where('Id', $from_menu_id);
+		$this->db->where('isdelete', 0);
+		$this->db->limit(1);
+		
+		$from_data_menu =  $this->db->get()->result();
+
+		$this->db->query('use '.$current_db);
+
+		$tmp['full_table_name'] = $from_data_menu[0]->full_table_name;
+		
+		$current_datetime = $this->datetime->get_current_datetime();
+
+		$this->db->select($from_data_menu[0]->full_table_name.'.*');
+		$this->db->from($from_data_menu[0]->full_table_name);
+		
+		$this->db->where($from_data_menu[0]->full_table_name.'.isdelete', 0);
+
+		$tmp['query'] = $this->db->get()->result();
+		$tmp['data_from_full_table_name'] = $from_data_menu[0]->full_table_name;
+		
+		return $tmp;
+	}
+	
+	function is_extended_form($data_menu){
+		$tmp = FALSE;
+		
+		$current_conn = $this->db;
+		$current_db = $current_conn->database;
+		$app_init = $this->app_init->app_init();
+		$applat_db = $app_init['applat_db_name'];
+		
+		$this->db->query('use '.$applat_db);
+
+		$this->db->select('Id');
+		$this->db->from('refextend_datamenu');
+		$this->db->where('refextend_datamenu.to_menu_id', $data_menu['id']);
+		$this->db->where('refextend_datamenu.isdelete', 0);
+		$this->db->limit(1);	
+		
+		$query =  $this->db->get()->result();
+
+		$this->db->query('use '.$current_db);
+
+		if (count($query) == 1){
+			$tmp = TRUE;
+		}
+		return $tmp;
+	}
+		
+	function get_function_access_data($menu_name,$menu){
+		$tmp['is_insert_disable'] = NULL;
+		$tmp['is_edit_disable'] = NULL;
+		$tmp['is_delete_disable'] = NULL;
+		
+		$current_conn = $this->db;
+		$current_db = $current_conn->database;
+		$app_init = $this->app_init->app_init();
+		$applat_db = $app_init['applat_db_name'];
+		
+		$this->db->query('use '.$applat_db);
+
+		$this->db->select('usergroup_modul_insert_disable,usergroup_modul_edit_disable,usergroup_modul_delete_disable,apply_setting_to_menu,menu_insert_disable,menu_edit_disable,menu_delete_disable,is_used_user_credent,user_credent_insert_disable,user_credent_edit_disable,user_credent_delete_disable');	
+		$this->db->from('v_functionaccess');
+		$this->db->where('username',$menu['user']);
+		$this->db->where('app_id',$menu['app_id']);
+		$this->db->where('url',$menu_name);
+		
+		$query = $this->db->get()->result();
+
+		$this->db->query('use '.$current_db);
+		
+		if (count($query) >= 1){
+			$row =  $query[0];
+		
+			if ($row->is_used_user_credent == 1){
+				$tmp['is_insert_disable'] = $row->user_credent_insert_disable;
+				$tmp['is_edit_disable'] = $row->user_credent_edit_disable;
+				$tmp['is_delete_disable'] = $row->user_credent_delete_disable;
+			} else{
+				if ($row->apply_setting_to_menu == 1){
+					$tmp['is_insert_disable'] = $row->usergroup_modul_insert_disable;
+					$tmp['is_edit_disable'] = $row->usergroup_modul_edit_disable;
+					$tmp['is_delete_disable'] = $row->usergroup_modul_delete_disable;
+				}else{
+					$tmp['is_insert_disable'] = $row->menu_insert_disable;
+					$tmp['is_edit_disable'] = $row->menu_edit_disable;
+					$tmp['is_delete_disable'] = $row->menu_delete_disable;
+				}
+			}
+		}
+		
+		return $tmp;
+	}
+	
+	function get_subform_full_table_name($menu_id,$subform_name){
+		$current_conn = $this->db;
+		$current_db = $current_conn->database;
+		$app_init = $this->app_init->app_init();
+		$applat_db = $app_init['applat_db_name'];
+		
+		$this->db->query('use '.$applat_db);
+
+		$this->db->select('full_table_name');
+		$this->db->from('refsubform_menu');
+		$this->db->where('menu_id', $menu_id);
+		$this->db->where('subform_name', $subform_name);
+		$this->db->limit(1);	
+		
+		$query =  $this->db->get()->result();
+
+		$this->db->query('use '.$current_db);
+
+		return $query[0]->full_table_name;
+	}
+
+	function get_data_prior_change($full_table_name,$form_fields,$id){
+		if (count($form_fields)>0){
+			foreach($form_fields as $form_field){
+				if ($form_field->control_type != 'checkbox' && $form_field->control_type != 'separator') {
+					$field_name = $form_field->field_name;
+					$tmp[$field_name] = NULL;
+				}
+			}
+			
+			foreach($form_fields as $form_field){
+				if ($form_field->control_type != 'checkbox' && $form_field->control_type != 'separator') {
+					$this->db->select($form_field->field_name);	
+				}
+			}
+			$this->db->where('id', $id);
+			$this->db->from($full_table_name);
+
+			$query = $this->db->get()->result();
+		
+			if (count($query) >= 1){
+				$row =  $query[0];
+				foreach($form_fields as $form_field){
+					if ($form_field->control_type != 'checkbox' && $form_field->control_type != 'separator') {
+						$field_name = $form_field->field_name;
+						$tmp[$field_name] = $row->$field_name;
+					}
+				}	
+			}
+			
+			return $tmp;
+		}else{
+			return NULL;
+		}
+	}
+	
+	function update_log($log){
+		$data = array(
+		        'app_id' => $log['app_id'],
+		        'data_trans_type' => $log['data_trans_type'],
+		        'username' => $log['username'],
+		        'ip_address' => $log['ip_address'],
+		        'data_changes' => $log['data_changes'],
+		        'createby' => 'sys',
+        		'createdate' => $this->datetime->get_current_datetime(),
+        		'isdelete' => 0
+		);
+
+		$this->db->insert('trnlogdata', $data);	
+	}
+	
+	function get_data_id_from_draft($data_menu,$draft_id){
+		$tmp_id = "";
+		
+		$this->db->select('Id');
+		$this->db->where('draft_id', $draft_id);
+		$this->db->from($data_menu['full_table_name']);
+		
+		$row = array();
+		$row =  $this->db->get()->result()[0];
+		
+		$tmp_id = $row->Id;
+		
+		////////// set draft_id to null ////////////////////////////////////////
+		$data['draft_id'] = NULL;
+		$this->db->where('Id', $tmp_id);
+		$this->db->update($data_menu['full_table_name'], $data);
+		/////////////////////////////////////////////////////////////////////////////
+		return $tmp_id;	
+	}
+	
+	function update_data($datasession,$data_menu,$form_fields,$datapost,$id,$formtype,$subform_name){
+		
+		$table_name = '';
+		if ($formtype == 'mainform'){ $table_name = $data_menu['full_table_name'];}
+		if ($formtype == 'subform'){
+			$query = $this->get_data_subform($data_menu['id'],$subform_name);
+			$row = $query[0];
+			$table_name = $row->full_table_name;
+		}
+		
+		$data_before = $this->get_data_prior_change($table_name,$form_fields,$id);
+		
+		$log['data_changes'] = '';
+		$data = array();
+		foreach($form_fields as $form_field){
+			if ($form_field->control_type != 'checkbox' && $form_field->control_type != 'separator') {
+				if ($form_field->field_type == 'datetime'){
+					if ($datapost[$form_field->field_name] != NULL){
+						$datapost[$form_field->field_name] = $this->datetime->convert_short_date_format_to_mysql($datapost[$form_field->field_name]);					}else{
+						$datapost[$form_field->field_name] = NULL;
+						}
+					
+				}
+			}
+			
+			$field_name = $form_field->field_name;
+			$field_value = $datapost[$form_field->field_name];
+			$data = array_merge($data,array($field_name => $field_value));
+
+			if ($data_before != NULL){
+				$log['data_changes'] .= " zzz ".$form_field->field_name.": ".$data_before[$form_field->field_name]." => ".$datapost[$form_field->field_name];	
+			}
+		}
+		
+		if ($formtype == 'mainform' && $data_menu['is_workflowdata'] == 1){
+			$tmp = array();
+			$tmp = array('status' => 'Draft');
+			$data = array_merge($data,$tmp);
+		}
+		
+		$tmp = array();
+		$tmp = array(
+		     'updateby' => $datasession['username'],
+	 		 'updatedate' => $this->datetime->get_current_datetime()
+		);
+		$data = array_merge($data,$tmp);
+
+		$this->db->where('Id', $id);
+		$this->db->update($table_name, $data);
+		
+		$log['app_id'] = $datasession['app_id'];
+		$log['data_trans_type'] = 'DATA CHANGES';
+		$log['username'] = $datasession['username'];
+		$log['ip_address'] = $this->input->ip_address();
+		$log['data_changes'] = $table_name.$log['data_changes'];
+		$this->update_log($log);
+	}
+	
+	function generate_batch_number($data_menu,$datapost) {
+		$tmp = NULL;
+
+		$this->db->select('year('.$data_menu['full_table_name'].'.createdate) as year_event, batch_number');
+		$this->db->where('year('.$data_menu['full_table_name'].'.createdate) = year("'.$this->datetime->convert_short_date_format_to_mysql($datapost['start_date']).'")',NULL);
+		$this->db->from($data_menu['full_table_name']);
+		$this->db->order_by('Id','Desc');
+		$this->db->limit(1);
+
+		
+		$query = $this->db->get()->result();
+
+		$batch_year = NULL;
+		$batch_running_number = NULL;
+
+		if (count($query) == 1) {
+			$row = $query[0];
+
+			if ($row->year_event == '') {
+				$batch_year = date("Y");
+			} else {
+				$batch_year = $row->year_event;
+			}
+
+			if ($row->batch_number == '') {
+				$batch_running_number = 1;
+			} else {
+				$batch_running_number_array = explode('/', $row->batch_number);
+				$batch_running_number = $batch_running_number_array[2] + 1;
+			}
+		} else {
+			$batch_year = date("Y");
+			$batch_running_number = 1;
+		}
+
+		$this->load->library('app_initializer','','app_init');
+		$reference_generator_id = $this->app_init->app_init()['reference_generator_id'];
+
+		$tmp = $reference_generator_id.'/PRJ/'.$batch_running_number.'/'.$batch_year;
+		
+		return $tmp;
+	}
+	/*===============================================================================================*/
+
+	function new_data($datasession,$data_menu,$form_fields,$datapost,$formtype,$subform_name = ''){
+		$table_name = '';
+		$log['data_changes'] = '';
+		$data = array();
+		
+		if ($formtype == 'mainform'){ $table_name = $data_menu['full_table_name'];}
+		if ($formtype == 'subform'){
+			$query = $this->get_data_subform($data_menu['id'],$subform_name);
+			$row = $query[0];
+			$table_name = $row->full_table_name;
+			
+			$data = array_merge($data,array($data_menu['full_table_name'].'_id' => $datapost['main_id']));
+		}
+		
+		foreach($form_fields as $form_field){
+			if ($form_field->control_type != 'checkbox' && $form_field->control_type != 'separator') { 
+				if ($form_field->field_type == 'datetime'){
+					if ($datapost[$form_field->field_name] != NULL){
+						$datapost[$form_field->field_name] = $this->datetime->convert_short_date_format_to_mysql($datapost[$form_field->field_name]);					}else{
+						$datapost[$form_field->field_name] = NULL;
+					}
+				}
+			}
+			
+			$field_name = $form_field->field_name;
+			$field_value = $datapost[$form_field->field_name];
+
+			$data = array_merge($data,array($field_name => $field_value));
+			$log['data_changes'] .= " zzz ".$field_name.": ".$field_value;
+		}
+
+		if ($formtype == 'mainform' && $data_menu['is_workflowdata'] == 1){
+			$tmp = array();
+			$tmp = array('status' => 'Draft');
+			$data = array_merge($data,$tmp);
+		}
+		
+		if ($datapost['draft_id'] != NULL){
+			$data = array_merge($data,array('draft_id' => $datapost['draft_id']));
+		}
+		
+		$tmp = array(
+		        'createby' => $datasession['username'],
+        		'createdate' => $this->datetime->get_current_datetime(),
+        		'isdelete' => 0
+		);
+		$data = array_merge($data,$tmp);
+		
+		if ($formtype == 'mainform'){
+			if ($this->dp_eform->check_if_menu_has_extended_data($data_menu)){
+				$tmp = array()	;
+				$extended_field_id = $this->get_data_extend_from_table($data_menu)['full_table_name'].'_id';
+				$tmp = array(
+				       $extended_field_id => $datapost[$extended_field_id]
+				);
+				$data = array_merge($data,$tmp);
+			}	
+		}
+		
+		$this->db->insert($table_name, $data);
+		
+		$log['app_id'] = $datasession['app_id'];
+		$log['data_trans_type'] = 'DATA ENTRY';
+		$log['username'] = $datasession['username'];
+		$log['ip_address'] = $this->input->ip_address();
+		$log['data_changes'] = $table_name.$log['data_changes'];
+		$this->update_log($log);
+	}
+	
+	function delete_data($datasession,$data_menu,$id,$formtype,$subform_name) {
+		$table_name = '';
+		if ($formtype == 'subform'){
+			$query = $this->get_data_subform($data_menu['id'],$subform_name);
+			$row = $query[0];
+			$table_name = $row->full_table_name;
+		}else{
+			$table_name = $data_menu['full_table_name'];
+		}
+		
+		$data = array(
+		'isdelete' =>1,
+        'deleteby' => $datasession['username'],
+        'deletedate' => $this->datetime->get_current_datetime()
+		);
+		
+		$this->db->where('Id', $id);
+		$this->db->update($table_name, $data);
+		
+		$log['app_id'] = $datasession['app_id'];
+		$log['data_trans_type'] = 'DATA REMOVE';
+		$log['username'] = $datasession['username'];
+		$log['ip_address'] = $this->input->ip_address();
+		$log['data_changes'] = $table_name." zzz Id: ".$id;
+		$this->update_log($log);
+	}
+}
