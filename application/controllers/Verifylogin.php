@@ -2,7 +2,6 @@
 
 class Verifylogin extends CI_Controller {
 
-	//private $app_code = 'camber';
 	private $app_code;
 	
  function __construct()
@@ -17,6 +16,7 @@ class Verifylogin extends CI_Controller {
    
    $app_init = $this->app_initializer->app_init();
    $this->app_code = $app_init['app_code'];
+
  }
 
  function index()
@@ -27,8 +27,8 @@ class Verifylogin extends CI_Controller {
    	
    $username = $this->security->xss_clean($this->input->post('username'));
    $password = $this->security->xss_clean($this->input->post('password'));
-	
-	$result = $this->user->login($username, $password);
+
+   $result = $this->user->login($username, $password);
 	
 	$allow = $this->user->check_allow_login($username);
 
@@ -58,11 +58,7 @@ class Verifylogin extends CI_Controller {
 	$this->session->set_userdata('logged_in', $tmp);
 	
 	if ($result) {
-	#customized fot MUNDIPHARMA, ePMAP Project 2020, insert usergroups to reviewer log table
-	$this->load->model('data_process_eform','dp_eform',TRUE);
-	$this->dp_eform->update_usergroups_reviewer_log();
-	#
-   	$sess_array = array();
+	$sess_array = array();
    	$row = $result[0];
 
    	$sess_array = array(

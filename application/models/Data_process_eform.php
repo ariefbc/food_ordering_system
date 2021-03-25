@@ -1007,21 +1007,7 @@ class Data_process_eform extends CI_Model {
 		if ($formtype == 'mainform' && ($data_menu['is_workflowdata'] == 1 || $data_menu['is_approval'] == 1)) {
 			$this->db->where($data_menu['full_table_name'].'.activity_type',$this->filter_data_by_activity_type($data_menu['url']));
 		}
-		#[END OF] filter data by activity type
-		
-		#customized fot MUNDIPHARMA, display data for update bpom status form
-		if (strtolower($data_menu['url']) == 'trans_frm_bpomgov_status' && $formtype == 'mainform') {
-			$this->db->where($data_menu['full_table_name'].'.is_bpom_required',1);
-			$this->db->where($data_menu['full_table_name'].'.status','Full Approve');
-		}
-		#
-		#customized fot MUNDIPHARMA, display data for update regional status form
-		if (strtolower($data_menu['url']) == 'trans_frm_regional_status' && $formtype == 'mainform') {
-			$this->db->where($data_menu['full_table_name'].'.is_regional_required',1);
-			$this->db->where($data_menu['full_table_name'].'.status','Full Approve');
-			$this->db->where('(coalesce('.$data_menu['full_table_name'].'.is_bpom_required,0) = 0 or ('.$data_menu['full_table_name'].'.is_bpom_required = 1 and '.$data_menu['full_table_name'].'.bpom_process_status = "Approved"))',NULL);
-		}
-		#
+		# [END OF] filter data by activity type
 		
 		//echo $this->db->get_compiled_select();exit;
 		
@@ -1143,68 +1129,6 @@ class Data_process_eform extends CI_Model {
 		return $full_table_name;
 	}
 
-	#customized for MUNDIPHARMA, check if approver is on at least the last 2 approvers
-	function check_approver_sequence_level_1_2($data_menu, $data_id, $datasession) {
-		$form_request_id = $this->wf->get_origin_data_menu_id($data_menu);
-		
-		$this->db->select('Id');
-		$this->db->from($data_menu['full_table_name']);
-		$this->db->where('hash_link', $data_id);
-
-		$query =  $this->db->get()->result();
-
-		$data_id = $query[0]->Id;
-
-		$app_init = $this->app_init->app_init();
-		$applat_db = $app_init['applat_db_name'];
-
-		$this->db->select('Id');
-		$this->db->from($applat_db.'.trnworkflowseq');
-		$this->db->where('menu_id', $form_request_id);
-		$this->db->where('data_id', $data_id);
-		$this->db->where('username', $datasession['username']);
-		$this->db->where('is_data_displayed', 1);
-		$this->db->where('status is null', NULL);
-		$this->db->where('wflayer_sequence in (1,2)', NULL);
-
-		$query =  $this->db->get()->result();
-
-		if ($query) return TRUE; else return FALSE;
-	}
-	#
-
-	#customized for Mundipharma 2020, ePMAP Project, get specific brand drop selection for submitted request
-	function get_brand_id($data_menu, $hash_link) {
-		$this->db->select('product_prefix');
-		$this->db->from($data_menu['full_table_name']);
-		$this->db->where('hash_link', $hash_link);
-
-		$query =  $this->db->get()->result();
-
-		if (!$query) {
-			return array();
-		} else {
-			$product_prefix = $query[0]->product_prefix;
-
-			if ($product_prefix == '') {
-				return array();
-			} else {
-				$app_init = $this->app_init->app_init();
-				$applat_db = $app_init['applat_db_name'];
-
-				$this->db->select('Id');
-				$this->db->from($applat_db.'.cmbr_ref_product');
-				$this->db->where('isdelete', 0);
-				$this->db->where('epmap_prefix', $product_prefix);
-
-				$query =  $this->db->get()->result();
-
-				return $query;
-			}
-		}
-	}
-	#[END OF] customized for Mundipharma 2020, ePMAP Project, get specific brand drop selection for submitted request
-
 	function get_selectiondatatableitems($form_component_id,$data_menu = array(),$main_id = 0) {
 		/////////////////// Get ID data for selection //////////////////////////////////////////
 		$app_init = $this->app_init->app_init();
@@ -1282,17 +1206,6 @@ class Data_process_eform extends CI_Model {
 		$this->db->select('user_id as item_value, fullname as item_text');
 		$this->db->from('v_menu');
 		$this->db->where('app_id', $app_id);
-
-		##customized fot MUNDIPHARMA, display specific users for MSL dan Regulatory PIC selection
-		if (strtolower($data_menu['url']) == 'msl_regulatory_setting' && $formtype == 'subform') {
-			if ($form_field->field_name == 'msl_user_id') {
-				$this->db->where('usergroup_name', 'Medical Scientific Liaison user group');
-			}
-			if ($form_field->field_name == 'regulatory_user_id') {
-				$this->db->where('usergroup_name', 'epmap - Regulatory Affairs Manager');
-			}
-		}
-		#
 
 		$this->db->order_by('fullname','ASC');
 		
@@ -1940,34 +1853,8 @@ class Data_process_eform extends CI_Model {
 		if ($formtype == 'mainform' && ($data_menu['is_workflowdata'] == 1 || $data_menu['is_approval'] == 1)) {
 			$this->db->where($data_menu['full_table_name'].'.activity_type',$this->filter_data_by_activity_type($data_menu['url']));
 		}
-		#[END OF] filter data by activity type
+		# [END OF] filter data by activity type
 
-		#customized fot MUNDIPHARMA, display data for update bpom status form
-		if (strtolower($data_menu['url']) == 'trans_frm_bpomgov_status' && $formtype == 'mainform') {
-			$this->db->where($data_menu['full_table_name'].'.is_bpom_required',1);
-			$this->db->where($data_menu['full_table_name'].'.status','Full Approve');
-		}
-		#
-		#customized fot MUNDIPHARMA, display data for update regional status form
-		if (strtolower($data_menu['url']) == 'trans_frm_regional_status' && $formtype == 'mainform') {
-			$this->db->where($data_menu['full_table_name'].'.is_regional_required',1);
-			$this->db->where($data_menu['full_table_name'].'.status','Full Approve');
-			$this->db->where('(coalesce('.$data_menu['full_table_name'].'.is_bpom_required,0) = 0 or ('.$data_menu['full_table_name'].'.is_bpom_required = 1 and '.$data_menu['full_table_name'].'.bpom_process_status = "Approved"))',NULL);
-		}
-		#
-		#
-		#customized fot MUNDIPHARMA, display submit request message on primary file log table
-		if ($formtype == "subform" && $subform_name == "Uploaded Material Primary File Log") {
-			$app_init = $this->app_init->app_init();
-			$applat_db = $app_init['applat_db_name'];
-
-			$this->db->distinct();
-			$this->db->select($applat_db.".trnlogworkflow.comm_msg");
-			$this->db->join($applat_db.".trnlogworkflow",$table_name.".createby = ".$applat_db.".trnlogworkflow.createby and DATE_FORMAT(".$table_name.".material_file_submit_date, '%Y-%m-%d %H:%i') = DATE_FORMAT(".$applat_db.".trnlogworkflow.createdate, '%Y-%m-%d %H:%i')","left");
-				
-		}
-		#[END OF] customized fot MUNDIPHARMA, display submit request message on primary file log table
-		
 		$this->db->limit($limit);
 		$this->db->offset($offset);
 
@@ -1981,18 +1868,6 @@ class Data_process_eform extends CI_Model {
 	function filter_data_by_activity_type($url) {
 		$activity_type = '';
 		$activity_type_array = array();
-
-		$activity_type_array['opioid'] = array('req_frm_opioid','apprv_frm_opioid');
-		$activity_type_array['training_internal'] = array('req_frm_internal_training','apprv_frm_internal_training');
-		$activity_type_array['product_name'] = array('req_frm_product_material','apprv_frm_product_material');
-		$activity_type_array['speaker_brief'] = array('req_frm_speaker_brief','apprv_frm_speaker_brief');
-		$activity_type_array['corporate'] = array('req_frm_corporate_materials','apprv_frm_corporate_materials');
-		$activity_type_array['key_promo_aid'] = array('req_frm_key_promotional_aid','apprv_frm_key_promotional_aid');
-		$activity_type_array['storemedia_pos'] = array('req_frm_in_store_pos','apprv_frm_in_store_pos');
-		$activity_type_array['social_media'] = array('req_frm_social_media','apprv_frm_social_media');
-		$activity_type_array['ecommerce'] = array('req_frm_ecommerce','apprv_frm_ecommerce');
-		$activity_type_array['gimmicks'] = array('req_frm_gimmicks','apprv_frm_gimmicks');
-		$activity_type_array['other'] = array('req_frm_other','apprv_frm_other');
 
 		foreach ($activity_type_array as $key => $value) {
 			if (in_array(strtolower($url), $activity_type_array[$key])) {
@@ -2384,120 +2259,6 @@ class Data_process_eform extends CI_Model {
 		return $tmp_id;	
 	}
 
-	#customized fot MUNDIPHARMA, ePMAP Project 2020, insert usergroups to reviewer log table
-	function update_usergroups_reviewer_log() {
-		$this->db->select('createby');
-		$this->db->from('epmap_req_material_reviewer_approver_file');
-		$this->db->where('createby is not null', NULL);
-		$this->db->where('usergroups is null', NULL);
-		
-		$query =  $this->db->get()->result();
-
-		foreach ($query as $row) {
-			$this->db->select('usergroup_name');
-			$this->db->from('v_epmap_users_usergroups');
-			$this->db->where('username', $row->createby);
-			
-			$usergroup =  $this->db->get()->result();
-
-			if ($usergroup) {
-				$usergroup = $usergroup[0]->usergroup_name;
-
-				$data['usergroups'] = $usergroup;
-				$this->db->where('createby', $row->createby);
-				$this->db->where('usergroups is null', NULL);
-				$this->db->update('epmap_req_material_reviewer_approver_file', $data);
-			}
-		}
-	}
-	#
-	
-	#customized fot MUNDIPHARMA, ePMAP Project 2020, check bpom status
-	function check_bpom_status($data_menu, $data_id) {
-		$this->db->select('is_bpom_required, bpom_process_status, is_regional_required, regional_status');
-		$this->db->from($data_menu['full_table_name']);
-		$this->db->where('Id', $data_id);
-		
-		$query =  $this->db->get()->result();
-
-		if ($query) {
-			return $query[0];
-		} else {
-			return FALSE;
-		}
-	}
-	# [END OF] customized fot MUNDIPHARMA, ePMAP Project 2020, check bpom status
-
-	#customized fot MUNDIPHARMA, ePMAP Project 2020, check if request is first submit
-	function check_request_first_submit($data_menu, $data_id) {
-		$app_init = $this->app_init->app_init();
-		$applat_db = $app_init['applat_db_name'];
-
-		$requestor_form_menu_id = $this->wf->get_origin_data_menu_id($data_menu);
-		$data_id = $this->get_data_id_from_hash_link($data_id,$data_menu['full_table_name']);
-
-		$this->db->select('count(Id) count_id_submit');
-		$this->db->from($applat_db.'.trnlogworkflow');
-		$this->db->where('data_id', $data_id);
-		$this->db->where('menu_id', $requestor_form_menu_id);
-		$this->db->where('status', 'Submit');
-		
-		$query =  $this->db->get()->result();
-
-		if ($query) {
-			return ($query[0]->count_id_submit == 0) ? 1 : $query[0]->count_id_submit;
-		} else {
-			return 1;
-		}
-
-	}
-	#[END OF]customized fot MUNDIPHARMA, ePMAP Project 2020, check if request is first submit
-	#
-	#customized fot MUNDIPHARMA, ePMAP Project 2020, check if request is already approved by MSL
-	function check_request_msl_prior_approved($data_menu, $data_id) {
-		$app_init = $this->app_init->app_init();
-		$applat_db = $app_init['applat_db_name'];
-
-		$requestor_form_menu_id = $this->wf->get_origin_data_menu_id($data_menu);
-		$data_id = $this->get_data_id_from_hash_link($data_id,$data_menu['full_table_name']);
-
-		$this->db->select($applat_db.'.trnlogworkflow.Id');
-		$this->db->from($applat_db.'.trnlogworkflow');
-		$this->db->join($applat_db.'.refnoncoreusers',$applat_db.'.refnoncoreusers.username = '.$applat_db.'.trnlogworkflow.createby');
-		$this->db->join($applat_db.'.refnoncoreusergroups_users',$applat_db.'.refnoncoreusers.Id = '.$applat_db.'.refnoncoreusergroups_users.user_id');
-		$this->db->join($applat_db.'.refnoncoreusergroups',$applat_db.'.refnoncoreusergroups.Id = '.$applat_db.'.refnoncoreusergroups_users.group_id');
-		$this->db->where('data_id', $data_id);
-		$this->db->where('menu_id', $requestor_form_menu_id);
-		$this->db->where('usergroup_name', 'Medical Scientific Liaison user group');
-		$this->db->where('status', 'Approve');
-		
-		$query =  $this->db->get()->result();
-
-		return $query;
-
-	}
-	#[END OF]customized fot MUNDIPHARMA, ePMAP Project 2020, check if request is already approved by MSL
-	
-	#customized fot MUNDIPHARMA, ePMAP Project 2020
-	function get_product_prefix($data_id) {
-		$app_init = $this->app_init->app_init();
-		$applat_db = $app_init['applat_db_name'];
-
-		$this->db->select('epmap_prefix,epmap_start_number');
-		$this->db->from($applat_db.'.cmbr_ref_product');
-		$this->db->where('Id', $data_id);
-		$this->db->limit(1);
-		
-		$query =  $this->db->get()->result();
-
-		if ($query) {
-			return array('epmap_prefix' => $query[0]->epmap_prefix, 'epmap_start_number' => (int) $query[0]->epmap_start_number);
-		} else {
-			return array('epmap_prefix' => '', 'epmap_start_number' => 0);
-		}
-	}
-	#
-	
 	function update_data($datasession,$data_menu,$form_fields,$datapost,$id,$formtype,$subform_name) {
 		
 		$table_name = '';
@@ -2539,77 +2300,8 @@ class Data_process_eform extends CI_Model {
 			$tmp = array('status' => 'Draft');
 			$data = array_merge($data,$tmp);
 
-			#customized fot MUNDIPHARMA, ePMAP Project 2020
-			if (strtolower($data_menu['full_table_name']) == 'epmap_req_material_data') {
-				$product_prefix = $this->get_product_prefix($datapost['brand_id']);
-
-				$tmp = array();
-				$tmp = array('product_prefix' => $product_prefix['epmap_prefix']);
-				$data = array_merge($data,$tmp);
-			}
-			#
 		}
 
-		#customized fot MUNDIPHARMA, ePMAP Project 2020
-		if ($data_menu['url'] == 'trans_frm_bpomgov_status') {
-			if (array_key_exists('bpom_process_status', $datapost)) {
-				if ($datapost['bpom_process_status'] != 'In Process') {
-					$tmp = array();
-					$tmp = array('bpom_finish_process_date' => $this->datetime->get_current_datetime());
-					$data = array_merge($data,$tmp);
-				}
-			}
-		}
-		#
-		#customized fot MUNDIPHARMA, ePMAP Project 2020
-		if ($data_menu['url'] == 'trans_frm_regional_status') {
-			if (array_key_exists('regional_status', $datapost)) {
-				if ($datapost['regional_status'] != 'In Process') {
-					$tmp = array();
-					$tmp = array('regional_finish_process_date' => $this->datetime->get_current_datetime());
-					$data = array_merge($data,$tmp);
-
-					if ($datapost['regional_status'] == 'Approved') {
-						$this->db->select('request_reference_number, last_approval_process_date');
-						$this->db->from($table_name);
-						$this->db->where('Id', $id);
-
-						$query = $this->db->get()->result();
-
-						$full_approved_date = $query[0]->last_approval_process_date;
-						$full_approved_date_array = explode(" ", $full_approved_date);
-						$full_approved_date = $full_approved_date_array[0];
-						$full_approved_date = new DateTime($full_approved_date);
-
-						$pmap_validity_date = $full_approved_date;
-						$interval = new DateInterval('P2Y'); #PMAP Validity period of 2 years
-						$pmap_validity_date->add($interval);
-
-						$full_approved_date_tmp = $query[0]->last_approval_process_date;
-						$full_approved_date_array_tmp = explode(" ", $full_approved_date_tmp);
-						$full_approved_date_tmp = $full_approved_date_array_tmp[0];
-						$full_approved_date_tmp = new DateTime($full_approved_date_tmp);
-
-						$month_approval_code = 100 + (int) $full_approved_date_tmp->format('m');
-						$month_approval_code = (string) $month_approval_code;
-						$month_approval_code = substr($month_approval_code,1);
-
-						$year_approval_code = (string) $full_approved_date_tmp->format('Y');
-						$year_approval_code = substr($year_approval_code,2);
-
-						$request_reference_number = $query[0]->request_reference_number.'/'.$month_approval_code.$year_approval_code;
-
-						$tmp = array();
-						$tmp = array('request_reference_number' => $request_reference_number,
-									'pmap_validity_date' => $pmap_validity_date->format('Y-m-d')
-							);
-						$data = array_merge($data,$tmp);
-					}
-				}
-			}
-		}
-		#
-		
 		$tmp = array();
 		$tmp = array(
 		     'updateby' => $datasession['username'],
@@ -2620,141 +2312,6 @@ class Data_process_eform extends CI_Model {
 		$this->db->where('Id', $id);
 		$this->db->update($table_name, $data);
 
-		#customized fot MUNDIPHARMA, ePMAP Project 2020, send email to requestor for BPOM & Regional Process Status Notification
-		if ($data_menu['url'] == 'trans_frm_bpomgov_status') {
-			if (array_key_exists('bpom_process_status', $datapost)) {
-				if ($datapost['bpom_process_status'] != 'In Process') {
-					$data_smtp = $this->wf->get_data_smtp();
-					$app_init = $this->app_init->app_init();
-					$applat_db = $app_init['applat_db_name'];
-
-					if ($data_smtp['is_enable'] == 1) {
-						$this->db->select('username,fullname,email_address');
-						$this->db->from($applat_db.'.refnoncoreusers');
-						$this->db->join($table_name, $table_name.'.createby = '.$applat_db.'.refnoncoreusers.username');
-						$this->db->where($table_name.'.Id',$id);
-						
-						$query = $this->db->get()->result();
-
-						$row = $query[0];
-
-						$content = $this->wf->get_detail_request_for_email($data_menu,$id);
-
-						$body_mail_content = "Dear ".$row->fullname.",<br><br><br>
-								BPOM / Government Agency Approval Process for the following Material is <strong>".strtoupper($datapost['bpom_process_status'])."</strong>
-								<br><br>".$content['content_email']."
-								<br><br>Reference : ".$content['reference_number']."
-								<br><br>BPOM/Gov. Agency Process confirmed by : ".$datasession['fullname']."
-								<br><br>Thank you.<br><br><br>Regards,<br><br>@@sender_name<br><br>*)This email is generated automatically, no need to reply.";
-
-						$data = array();
-						$requestor_form_menu_id = $this->wf->get_origin_data_menu_id($data_menu);
-
-						$data = array(
-							        'menu_id' => $requestor_form_menu_id,
-							        'data_id' => $id,
-							        'username' => $row->username,
-							        'to_email_address' => $row->email_address,
-							        'email_subject' => 'BPOM/Gov. Process Status for Request#.'.$content['reference_number'].' : '.strtoupper($datapost['bpom_process_status']),
-							        'email_body_content' => $body_mail_content,
-							        'createby' => $datasession['username'],
-							        'createdate' => $this->datetime->get_current_datetime()
-								);
-						
-						$this->db->insert($applat_db.'.refmailmanjobs', $data);
-						
-						if (strtolower($datapost['bpom_process_status']) == strtolower("Approved")) {
-							$this->db->select('username,fullname,email_address');
-							$this->db->from($data_menu['full_table_name']);
-							$this->db->join($applat_db.'.refnoncoreusers', $data_menu['full_table_name'].'.required_regional_process_by = '.$applat_db.'.refnoncoreusers.username');
-							$this->db->where($data_menu['full_table_name'].'.Id',$id);
-							$this->db->where($data_menu['full_table_name'].'.is_regional_required',1);
-							
-							$query_regional = $this->db->get()->result();
-
-							if ($query_regional) {
-								$row_regional = $query_regional[0];
-
-								$data = array();
-								$requestor_form_menu_id = $this->wf->get_origin_data_menu_id($data_menu);
-
-								$body_mail_content = "Dear ".$row_regional->fullname.",<br><br><br>
-										Kindly proceed Regional Communication Approval Process for the following  Material
-										<br><br>".$content['content_email']."
-										<br><br>Reference : ".$content['reference_number']."
-										<br><br>BPOM/Gov. Agency Process confirmed by : ".$datasession['fullname']."
-										<br><br>Thank you.<br><br><br>Regards,<br><br>@@sender_name<br><br>*)This email is generated automatically, no need to reply.";
-
-								$data = array();
-								$requestor_form_menu_id = $this->wf->get_origin_data_menu_id($data_menu);
-
-								$data = array(
-									        'menu_id' => $requestor_form_menu_id,
-									        'data_id' => $id,
-									        'username' => $row_regional->username,
-									        'to_email_address' => $row_regional->email_address.','.$row->email_address,
-									        'email_subject' => 'Proceed Regional Process for ePMAP#.'.$content['reference_number'],
-									        'email_body_content' => $body_mail_content,
-									        'createby' => $datasession['username'],
-									        'createdate' => $this->datetime->get_current_datetime()
-										);
-								
-								$this->db->insert($applat_db.'.refmailmanjobs', $data);
-							}
-						}
-					}
-				}
-			}
-		}
-
-		if ($data_menu['url'] == 'trans_frm_regional_status') {
-			if (array_key_exists('regional_status', $datapost)) {
-				if ($datapost['regional_status'] != 'In Process') {
-					$data_smtp = $this->wf->get_data_smtp();
-					$app_init = $this->app_init->app_init();
-					$applat_db = $app_init['applat_db_name'];
-
-					if ($data_smtp['is_enable'] == 1) {
-						$this->db->select('username,fullname,email_address');
-						$this->db->from($applat_db.'.refnoncoreusers');
-						$this->db->join($table_name, $table_name.'.createby = '.$applat_db.'.refnoncoreusers.username');
-						$this->db->where($table_name.'.Id',$id);
-						
-						$query = $this->db->get()->result();
-
-						$row = $query[0];
-
-						$content = $this->wf->get_detail_request_for_email($data_menu,$id);
-
-						$body_mail_content = "Dear ".$row->fullname.",<br><br><br>
-								Regional Communicaiton Approval Process for the following Material is <strong>".strtoupper($datapost['regional_status'])."</strong>
-								<br><br>".$content['content_email']."
-								<br><br>Reference : ".$content['reference_number']."
-								<br><br>Regional Communication Process confirmed by : ".$datasession['fullname']."
-								<br><br>Thank you.<br><br><br>Regards,<br><br>@@sender_name<br><br>*)This email is generated automatically, no need to reply.";
-
-						$data = array();
-						$requestor_form_menu_id = $this->wf->get_origin_data_menu_id($data_menu);
-
-						$data = array(
-							        'menu_id' => $requestor_form_menu_id,
-							        'data_id' => $id,
-							        'username' => $row->username,
-							        'to_email_address' => $row->email_address,
-							        'email_subject' => 'Regional Communication Process Status for Request#.'.$content['reference_number'].' : '.strtoupper($datapost['regional_status']),
-							        'email_body_content' => $body_mail_content,
-							        'createby' => $datasession['username'],
-							        'createdate' => $this->datetime->get_current_datetime()
-								);
-						
-						$this->db->insert($applat_db.'.refmailmanjobs', $data);
-					}
-				}
-			}
-		}
-		#[END OF] customized fot MUNDIPHARMA, ePMAP Project 2020, send email to requestor for BPOM & Regional Process Status Notification
-		#
-		
 		$log['app_id'] = $datasession['app_id'];
 		$log['data_trans_type'] = 'DATA CHANGES';
 		$log['username'] = $datasession['username'];
@@ -2962,54 +2519,6 @@ class Data_process_eform extends CI_Model {
 		return $hash_link;
 	}
 
-	#customized fot MUNDIPHARMA, ePMAP Project 2020
-	function new_reviewer_data($reviewer_data,$datasession,$data_menu) {
-		
-		$get_current_datetime = $this->datetime->get_current_datetime();
-		$reviewer_data['epmap_req_material_data_id'] = $this->get_data_id_from_hash_link($reviewer_data['epmap_req_material_data_id'],$data_menu['full_table_name']);
-
-		$data = array('epmap_req_material_data_id' => $reviewer_data['epmap_req_material_data_id'],
-						'reviewer_approver_note' => $reviewer_data['reviewer_approver_note'],
-						'approver_id' => $datasession['id'],
-						'reviewer_approver_date' => $get_current_datetime,
-						'reviewer_approver_file' => $reviewer_data['reviewer_approver_file']);
-
-		$tmp = array(
-	        'createby' => $datasession['username'],
-    		'createdate' => $get_current_datetime,
-    		'isdelete' => 0,
-    		'hash_link' => $this->generate_hash_link('epmap_req_material_reviewer_approver_file')
-		);
-
-		$data = array_merge($data,$tmp);
-
-		if (array_key_exists('is_approved_with_changes', $reviewer_data)) {
-			$tmp = array(
-		        'is_approved_with_changes' => $reviewer_data['is_approved_with_changes']
-			);
-
-			$data = array_merge($data,$tmp);
-		}
-
-		$this->db->insert('epmap_req_material_reviewer_approver_file', $data);
-
-		if (array_key_exists('is_bpom_required', $reviewer_data)) {
-			if ($reviewer_data['is_bpom_required'] == 1) {
-				$data = array(
-					'is_bpom_required' => $reviewer_data['is_bpom_required'],
-					'bpom_process_status' => 'In Process',
-					'required_bpom_process_by' => $datasession['username']
-				);
-				
-				$this->db->where('Id', $reviewer_data['epmap_req_material_data_id']);
-				$this->db->update($data_menu['full_table_name'],$data);
-			}
-		}
-
-		return NULL;
-	}
-	#
-
 	function new_data($datasession,$data_menu,$form_fields,$datapost,$formtype,$subform_name = '') {
 		$table_name = '';
 		$log['data_changes'] = '';
@@ -3047,16 +2556,6 @@ class Data_process_eform extends CI_Model {
 			$tmp = array();
 			$tmp = array('status' => 'Draft');
 			$data = array_merge($data,$tmp);
-
-			#customized fot MUNDIPHARMA, ePMAP Project 2020
-			if (strtolower($data_menu['full_table_name']) == 'epmap_req_material_data') {
-				$product_prefix = $this->get_product_prefix($datapost['brand_id']);
-
-				$tmp = array();
-				$tmp = array('product_prefix' => $product_prefix['epmap_prefix']);
-				$data = array_merge($data,$tmp);
-			}
-			#
 		}
 		
 		if ($datapost['draft_id'] != NULL) {

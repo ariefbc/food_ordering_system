@@ -62,12 +62,6 @@ class Eform extends CI_Controller {
 			array_push($headings,$this->data_process_translate->check_vocab($language,$grid_field->column_header));
 		}
 
-		#customized fot MUNDIPHARMA, ePMAP Project 2020, add submit message column on primary file log table
-		if ($formtype == "subform" && $subform_name == "Uploaded Material Primary File Log") {
-			array_push($headings,$this->data_process_translate->check_vocab($language,"Submit Request Messages"));	
-		}
-		#[END OF] customized fot MUNDIPHARMA, ePMAP Project 2020, add submit message column on primary file log table
-
 		if (($data_menu['is_workflowdata'] == 1 || $data_menu['is_approval'] == 1 || $this->display_reference_column($data_menu['url'])) && $formtype == 'mainform') {
 
 			array_push($headings,$this->data_process_translate->check_vocab($language,"Requestor"));
@@ -191,22 +185,6 @@ class Eform extends CI_Controller {
 					$data_menu['is_delete_disable'] = $data_menu_tmp['is_delete_disable'];
 				}
 				
-				#customized fot MUNDIPHARMA, ePMAP Project 2020, disable edit function for processed BPOM
-				if ($formtype == 'mainform' && strtolower($data_menu['url']) == 'trans_frm_bpomgov_status') {
-					if ($row->bpom_process_status != "In Process") {
-						$data_menu['is_edit_disable'] = 1;
-					}
-				}
-				# [END OF] customized fot MUNDIPHARMA, ePMAP Project 2020, disable edit function for processed BPOM
-				
-				#customized fot MUNDIPHARMA, ePMAP Project 2020, disable edit function for processed Regional
-				if ($formtype == 'mainform' && strtolower($data_menu['url']) == 'trans_frm_regional_status') {
-					if ($row->regional_status != "In Process") {
-						$data_menu['is_edit_disable'] = 1;
-					}
-				}
-				# [END OF] customized fot MUNDIPHARMA, ePMAP Project 2020, disable edit function for processed Regional
-				
 				$btn_edit_label = ($data_menu['is_edit_disable'] == 1)? "Detail" : "Edit";
 
 				if ($formtype != 'subform') {
@@ -273,45 +251,6 @@ class Eform extends CI_Controller {
 	        	if (($data_menu['is_workflowdata'] == 1 || $data_menu['is_approval'] == 1  || $this->display_reference_column($data_menu['url'])) && $formtype == 'mainform') {
 	        		
 	        		$request_reference_number = $row->request_reference_number;
-	        		
-	        		#customized fot MUNDIPHARMA, ePMAP Project 2020
-	        		$bpom_status = "";
-	        		if ((int) $row->is_bpom_required == 1) {
-						switch ($row->bpom_process_status) {
-							case 'In Process':
-								$bpom_status = "<br><font color='orange'>REQUIRES BPOM/GOV. REVIEW PROCESS</font>";
-								break;
-							case 'Approved':
-								$bpom_status = "<br><font color='green'>BPOM/GOV. REVIEW: APPROVED</font>";
-								break;
-							case 'Rejected':
-								$bpom_status = "<br><font color='red'>BPOM/GOV. REVIEW: REJECTED</font>";
-								break;
-							default:
-								# code...
-								break;
-						}
-					}
-
-					if ((int) $row->is_regional_required == 1) {
-						switch ($row->regional_status) {
-							case 'In Process':
-								$bpom_status .= "<br><font color='orange'>REQUIRES REGIONAL REVIEW PROCESS</font>";
-								break;
-							case 'Approved':
-								$bpom_status .= "<br><font color='green'>REGIONAL REVIEW: APPROVED</font>";
-								break;
-							case 'Rejected':
-								$bpom_status .= "<br><font color='red'>REGIONAL REVIEW: REJECTED</font>";
-								break;
-							default:
-								# code...
-								break;
-						}
-					}
-
-					$request_reference_number .= $bpom_status;
-	        		#
 	        		
 	        		array_push($content,array('data'=>$request_reference_number));
 	        	}
@@ -468,15 +407,8 @@ class Eform extends CI_Controller {
 								$grid_value = number_format($tmp_value,0,',','.');
 								break;
 							case 'datetime': 
-								#$grid_value = ($tmp_value != NULL)? $this->datetime->convert_mysql_date_format_to_short_string($tmp_value) : $tmp_value;
+								$grid_value = ($tmp_value != NULL)? $this->datetime->convert_mysql_date_format_to_short_string($tmp_value) : $tmp_value;
 								
-								#customized fot MUNDIPHARMA, ePMAP Project 2020
-								if (!in_array($grid_field->field_name, array('material_file_submit_date','reviewer_approver_date'))) {
-									$grid_value = ($tmp_value != NULL)? $this->datetime->convert_mysql_date_format_to_short_string($tmp_value) : $tmp_value;
-								} else {
-									$grid_value = $tmp_value;
-								}
-								#
 								break;
 							default:
 								if ($grid_field->control_type == 'fileuploader') {
@@ -592,10 +524,6 @@ class Eform extends CI_Controller {
 					array_push($content,array('data'=>$status_string));
 				}
 
-				if ($formtype == "subform" && $subform_name == "Uploaded Material Primary File Log") {
-					array_push($content,array('data'=>$row->comm_msg));
-				}
-
 				array_push($content,array('data'=>$task));
 		     	
 		     	if ($data_menu['is_approval'] != 1) {
@@ -701,20 +629,6 @@ class Eform extends CI_Controller {
 			if ($task == 'new' && (int)$row->is_insert_disable == 1) {
 				$subform_disable_insert = TRUE;
 			}
-
-			#customized Mundi EPMAP, check if request is already processed, then disable for upload/remove additional file
-			if (strtolower($data_menu['url']) == 'trans_frm_bpomgov_status' && str_replace("zzz", "/", str_replace("%20", " ", $form_name)) == 'BPOM / Government Process Supporting Documents') {
-				$tmp_id = $this->dp_eform->get_data_id_from_hash_link($main_id,$data_menu['full_table_name']);
-				$status_bpom = $this->dp_eform->check_bpom_status($data_menu,$tmp_id);
-
-				if ($status_bpom) {
-					if ($status_bpom->bpom_process_status != 'In Process') {
-						$subform_disable_insert =  TRUE;
-						$subform_disable_edit = TRUE;
-					}
-				}
-			}
-			#[END OF] customized Mundi EPMAP, check if request is already processed, then disable for upload/remove additional file
 		}
 
 		$re_input = (count($datapost) >= 1)? TRUE : FALSE;
@@ -1127,16 +1041,6 @@ class Eform extends CI_Controller {
 					}
 
 					$component .= form_textarea($data_ta);
-					#customized fot MUNDIPHARMA, ePMAP Project 2020, handle regulatory notes from previous input prior upload supp docs page
-					if ($form_field->field_name == 'regulatory_notes') {
-						$component .="<script>
-						if (localStorage.getItem('regulatorynotes_".$main_id."')) {
-							document.getElementById('".$form_field->control_name."').value = localStorage.getItem('regulatorynotes_".$main_id."');
-							localStorage.removeItem('regulatorynotes_".$main_id."');
-						}
-						</script>";
-					}
-					#[END OF] customized fot MUNDIPHARMA, ePMAP Project 2020, handle regulatory notes from previous input prior upload supp docs page
 				} else {
 					$component .= "<br>".nl2br($data_value);
 				}
@@ -1396,71 +1300,10 @@ class Eform extends CI_Controller {
 						if ($data_value && $key == $data_value) {
 							$options_tmp[$key] = $options[$key];
 						}
-
-						switch ($data_menu['url']) {
-							case "req_frm_speaker_brief":
-								if ($form_field->field_name == 'material_type_id') {
-									if ($value == "Speaker brief") {
-										$options_tmp[$key] = $options[$key];
-									}
-								} else {
-									$options_tmp[$key] = $options[$key];
-								}
-								break;
-							case "req_frm_gimmicks":
-								if ($form_field->field_name == 'material_type_id') {
-									if ($value == "Gimmick") {
-										$options_tmp[$key] = $options[$key];
-									}
-								} else {
-									$options_tmp[$key] = $options[$key];
-								}
-								break;
-							default:
-								if ($form_field->field_name == 'material_type_id') {
-									if (!in_array($value, array("Speaker brief","Gimmick"))) {
-										$options_tmp[$key] = $options[$key];
-									}
-								} else {
-									$options_tmp[$key] = $options[$key];
-								}
-								break;
-						}
 					}
 
 					if ($options_tmp) {
 						$options = $options_tmp;
-					}
-
-					if ($data_menu['full_table_name'] == 'epmap_req_material_data' 
-						&& $data_menu['is_workflowdata'] == 1
-						&& $formtype == 'mainform' 
-						&& $task == 'edit'
-						&& $form_field->field_name == 'brand_id'
-						&& $data_detail['request_reference_number'] != '') {
-
-						$tmp = array();
-
-						$brand_id = $this->dp_eform->get_brand_id($data_menu,$main_id);
-
-						foreach ($options as $key => $value) {
-							if ($key == $data_value) {
-								$tmp[$key] = $value;
-							} else {
-								if ($brand_id) {
-									foreach ($brand_id as $brand_id_row) {
-										if ($key == $brand_id_row->Id) {
-											$tmp[$key] = $value;
-										}
-									}
-								}
-							}
-						}
-
-						if ($tmp) {
-							$options = $tmp;
-							$tmp = array();
-						}
 					}
 
 					$tmp = form_dropdown($form_field->control_name,$options,$data_value,'id="'.$form_field->control_name.'" class="form-control select2" style="width: 100%;"'.$disabled.' '.$js_onchange_caller);
@@ -1699,14 +1542,10 @@ class Eform extends CI_Controller {
 				}	
 			}			
 			
-			#customized fot MUNDIPHARMA, ePMAP Project 2020, handle uploading file for reviewer
-			$reviewer_approver_file = "";
-			# [END OF] customized fot MUNDIPHARMA, ePMAP Project 2020, handle uploading file for reviewer
-
 			if ($data_menu['is_approval'] == 1) {
 				$submission = isset($_POST['submission']) ? $_POST['submission'] : NULL;
 
-				if (in_array($submission,array("revise","reject","approve_with_changes"))) {
+				if (in_array($submission,array("revise","reject"))) {
 					if ($msgerror == "") {
 						$comm_msg = isset($_POST['wf_msg']) ? $_POST['wf_msg'] : NULL;
 
@@ -1719,78 +1558,11 @@ class Eform extends CI_Controller {
 								$msgerror = "Please input message to Requestor for this request to be rejected";
 							}
 
-							if ($submission == "approve_with_changes") {
-								$msgerror = "Please input message as a note/remark for revision/correction of the content of this material by the Requestor";
-							}
-							
 							$java_alert['msg'] = $msgerror;
 							$java_alert['form_control_name'] = "wf_msg";
 							$validate_revise = FALSE;
 						}
 					}
-				}
-
-				if ($msgerror == "") {#customized fot MUNDIPHARMA, ePMAP Project 2020, handle uploading file for reviewer
-					if (isset($_FILES['fureviewfile'])) {
-						$file = $_FILES['fureviewfile'];
-
-						if (basename($file['name'] != '')) {
-							$username_file_string = $datasession['username'];
-							$username_file_string = str_replace(" ", "", $username_file_string);
-							$username_file_string = str_replace(".", "", $username_file_string);
-							$username_file_string .= "_";
-
-							$current_datetime_string = $this->datetime->get_current_datetime();
-							$current_datetime_string = str_replace("/", "", $current_datetime_string);
-							$current_datetime_string = str_replace(" ", "", $current_datetime_string);
-							$current_datetime_string = str_replace(":", "", $current_datetime_string);
-							
-							$filename_string = $username_file_string.$current_datetime_string.'__'.basename($file['name']);
-
-							$app_init = $this->app_init->app_init();
-							$file_dir = $app_init['file_upload_dir'];
-							$target_dir = $file_dir.'reviewer_approver_files/';
-							$target_file = $target_dir.$filename_string;
-							$origin_file = $file['tmp_name'];
-							
-							$file_is_valid = TRUE;
-
-							//// check file upload size allowed /////////////////////////////
-							$max_size_allowed = 10240 * 1024;
-							if ($file['size'] > $max_size_allowed) {
-								$file_is_valid = FALSE;
-								$msgerror = $this->data_process_translate->check_vocab($datasession['language'],"allowed file size is exceeded")." : Upload File by Reviewer/Approver";
-								$java_alert['msg'] = $msgerror;
-								$java_alert['form_control_name'] = 'fureviewfile';
-							}
-							/////////////////////////////////////////////////////////////////////////////
-							
-							//// check file type allowed ///////////////////////////////////////
-							if ($file_is_valid) {
-								$file_type = strtolower(pathinfo($target_file,PATHINFO_EXTENSION));
-								$allowed_file_types = array('pdf','jpg','jpeg','bmp','png');
-								if (!in_array($file_type, $allowed_file_types)) {
-									$file_is_valid = FALSE;
-									$msgerror  = $this->data_process_translate->check_vocab($datasession['language'],"invalid file type")." : Upload File by Reviewer/Approver";
-									//echo $msgerror;exit;
-									$java_alert['msg'] = $msgerror;
-									$java_alert['form_control_name'] = 'fureviewfile';
-								} else {
-									$file_is_valid = TRUE;
-									$msgerror  = "";
-									$java_alert['msg'] = $msgerror;
-									$java_alert['form_control_name'] = "";
-								}
-							}							
-							/////////////////////////////////////////////////////////////////////////////
-							
-							if ($file_is_valid) {
-								move_uploaded_file($origin_file,$target_file);
-
-								$reviewer_approver_file = $filename_string;
-							}
-						}
-					}#[END OF]customized fot MUNDIPHARMA, ePMAP Project 2020, handle uploading file for reviewer
 				}
 			}
 			
@@ -1798,45 +1570,6 @@ class Eform extends CI_Controller {
 				if ($task == 'edit') {
 					$submission = isset($_POST['submission']) ? $_POST['submission'] : NULL;
 
-					#customized fot MUNDIPHARMA, ePMAP Project 2020, insert into table reviewer/approver file log
-					if ($data_menu['is_approval'] == 1 && $data_menu['full_table_name'] == 'epmap_req_material_data') {
-						$reviewer_data = array();
-
-						$reviewer_data['reviewer_approver_note'] = isset($_POST['wf_msg']) ? $_POST['wf_msg'] : NULL;
-						$reviewer_data['epmap_req_material_data_id'] = $id;
-						$reviewer_data['reviewer_approver_file'] = $reviewer_approver_file;
-
-						if (in_array('epmap - Regulatory Affairs Manager', $datasession['usergroup_name'])) {
-							$reviewer_data['is_bpom_required'] = isset($_POST['ddbpom']) ? $_POST['ddbpom'] : NULL;
-						}
-
-						switch ($submission) {
-							case 'approve':
-								$reviewer_data['reviewer_approver_note'] .= ($reviewer_data['reviewer_approver_note'] != "") ? "<br><font color='green'><i>Approved</i></font>" : "<font color='green'><i>Approved</i></font>" ;
-								break;
-							case 'revise':
-								$reviewer_data['reviewer_approver_note'] .= ($reviewer_data['reviewer_approver_note'] != "") ? "<br><font color='orange'><i>Request for Revision</i></font>" : "<font color='orange'><i>Request for Revision</i></font>" ;
-								break;
-							case 'reject':
-								$reviewer_data['reviewer_approver_note'] .= ($reviewer_data['reviewer_approver_note'] != "") ? "<br><font color='red'><i>Rejected</i></font>" : "<font color='red'><i>Rejected</i></font>" ;
-								break;
-							case 'approve_with_changes':
-								$reviewer_data['reviewer_approver_note'] .= ($reviewer_data['reviewer_approver_note'] != "") ? "<br><font color='blue'><i>Approved with changes</i></font>" : "<font color='blue'><i>Approved with changes</i></font>" ;
-								break;
-							default:
-								# code...
-								break;
-						}
-
-						if ($submission == 'approve_with_changes') { 
-							$submission = "approve";
-							$reviewer_data['is_approved_with_changes'] = 1;
-						}
-
-						$this->dp_eform->new_reviewer_data($reviewer_data,$datasession,$data_menu);
-					}
-					#[END OF] customized fot MUNDIPHARMA, ePMAP Project 2020, insert into table reviewer/approver file log
-					
 					if ($data_menu['is_approval'] == NULL) {
 						$this->dp_eform->update_data($datasession,$data_menu,$form_fields,$datapost,$id,$formtype,$subform_name);
 
@@ -2028,9 +1761,6 @@ class Eform extends CI_Controller {
 	
 	function show_interface($java_alert = array(),$validate_revise,$review_array,$menu_name,$data_id,$task,$formtype,$subform_name='',$main_id = 0,$msgerror = '', $datapost = array()) {
 
-			#customized fot MUNDIPHARMA, ePMAP Project 2020, insert usergroups to reviewer log table
-			$this->dp_eform->update_usergroups_reviewer_log();
-			#
 			$datasession = $this->session->userdata('logged_in');
 			
 			if (!($this->user->check_allow_access_page($datasession,$menu_name))) {
@@ -2056,24 +1786,6 @@ class Eform extends CI_Controller {
 			$form_fields = $this->dp_eform->get_form_fields($data_menu['id'],$formtype,$task,$data_id,$subform_name);
 			$data_detail = array();
 			$data_detail = $this->dp_eform->get_data_detail($data_menu,$form_fields,$data_id,$formtype,$subform_name);
-
-			#customized fot MUNDIPHARMA, ePMAP Project 2020, disable edit function for processed BPOM
-			if ($formtype == 'mainform' && strtolower($data_menu['url']) == 'trans_frm_bpomgov_status') {
-				if ($data_detail['bpom_process_status'] != "In Process") {
-					$data_menu['is_edit_disable'] = 1;
-				}
-			}
-
-			# [END OF] customized fot MUNDIPHARMA, ePMAP Project 2020, disable edit function for processed BPOM
-			
-			#customized fot MUNDIPHARMA, ePMAP Project 2020, disable edit function for processed Regional
-			if ($formtype == 'mainform' && strtolower($data_menu['url']) == 'trans_frm_regional_status') {
-				if ($data_detail['regional_status'] != "In Process") {
-					$data_menu['is_edit_disable'] = 1;
-				}
-			}
-
-			# [END OF] customized fot MUNDIPHARMA, ePMAP Project 2020, disable edit function for processed Regional
 
 			$data_menu['subform_title'] = ($subform_name != "") ? str_replace("%20", " ", $subform_name) : "";
 			

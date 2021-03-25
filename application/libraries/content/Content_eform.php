@@ -111,20 +111,6 @@ class Content_eform {
 				if ((int)$row->is_edit_disable == 1) {
 					$subform_disable_edit = TRUE;
 				}
-
-				#customized Mundi EPMAP, check if request is already processed, then disable for upload/remove additional file
-				if (strtolower($data_menu['url']) == 'trans_frm_bpomgov_status' && str_replace("zzz", "/", str_replace("%20", " ", $form_name)) == 'BPOM / Government Process Supporting Documents') {
-					$tmp_id = $this->ci->dp_eform->get_data_id_from_hash_link($main_id,$data_menu['full_table_name']);
-					$status_bpom = $this->ci->dp_eform->check_bpom_status($data_menu,$tmp_id);
-
-					if ($status_bpom) {
-						if ($status_bpom->bpom_process_status != 'In Process') {
-							$subform_disable_insert =  TRUE;
-							$subform_disable_edit = TRUE;
-						}
-					}
-				}
-				#[END OF] customized Mundi EPMAP, check if request is already processed, then disable for upload/remove additional file
 			}
 
 			$form_open = "";
@@ -168,23 +154,6 @@ class Content_eform {
 					
 					$btn_submit_request = ($formtype == 'mainform' && ($data_menu['is_workflowdata'] == 1 || $data_menu['is_transdata'] == 1))? "&nbsp;<button type=\"submit\" ".$btn_submit_disabled." id=\"btn_submit\" name=\"submission\" value=\"1\" class=\"btn bg-orange\" onClick=\"btn_response();\"><i class=\"fa fa-check\" aria-hidden=\"true\"></i>&nbsp;".$this->check_vocab($language,"Submit")."</button>" : "";
 
-					#customized for MUNDIPHARMA, ePMAP Poject 2021, provide  disclaimer checkbox
-					if ($formtype == 'mainform' && 
-						$data_menu['is_workflowdata'] == 1 && 
-						$data_menu['full_table_name'] == 'epmap_req_material_data' && 
-						$task == 'edit') {
-						$subformgrid .= "<br>&nbsp;&nbsp;".form_checkbox(array("id" => "chk_confirmation","onclick" => "
-							var chk_confirmation = document.getElementById('chk_confirmation');
-							var btn_submit = document.getElementById('btn_submit');
-
-							if (chk_confirmation.checked == true) {
-							    btn_submit.disabled = false;
-							  } else {
-							    btn_submit.disabled = true;
-							  }
-							"))."<label> I verify that the material has been made in accordance with all internal requirements, all external legal and regulatory requirements</label><font color = 'red'>*</font><br><br>";
-					}
-					#[END OF] customized for MUNDIPHARMA, ePMAP Poject 2021, provide  disclaimer checkbox
 				}
 				
 				$btn_save = "&nbsp;<button type=\"submit\" name=\"submission\" class=\"btn bg-orange\" onClick=\"btn_response();\" ".$draft_value."><i class=\"".$class_btn_save."\" aria-hidden=\"true\"></i>&nbsp;".$this->check_vocab($language,$txt_btn_save)."</button>&nbsp;".$msgerror;
@@ -199,15 +168,6 @@ class Content_eform {
 				if ($msgerror != '') {
 					$btn_submit_request .= "&nbsp;".str_replace("\\x", "\\n", $msgerror);
 				}
-
-				#customized for MUNDIPHARMA, ePMAP Poject 2021, provide  disclaimer checkbox
-				if ($formtype == 'mainform' && 
-					($data_menu['is_workflowdata'] == 1 || $data_menu['is_approval'] == 1) && 
-					$data_menu['full_table_name'] == 'epmap_req_material_data' && 
-					$task == 'edit') {
-					$subformgrid .= "<br>&nbsp;&nbsp;<label> &#x2714; I verify that the material has been made in accordance with all internal requirements, all external legal and regulatory requirements</label><font color = 'red'>*</font><br><br>";
-				}
-				#[END OF] customized for MUNDIPHARMA, ePMAP Poject 2021, provide  disclaimer checkbox
 			}
 			
 			$btn_href_cancel = (($formtype == "mainform"))? site_url($control_name."/cancel/".$menu_name) : site_url($control_name."/edit/".$menu_name."/".$main_id);		
@@ -226,60 +186,6 @@ class Content_eform {
 
 				$button_approve_text = "Approve";
 				$button_approve_with_changes = "";
-
-				#customized fot MUNDIPHARMA, ePMAP Project 2020, disable revise and reject button for specific condition and usergroups
-				
-				if ($data_menu['full_table_name'] == 'epmap_req_material_data' && $data_menu['is_approval'] == 1) {
-					if ($this->ci->dp_eform->check_request_first_submit($data_menu, $data_id) == 1 && !in_array($data_menu['url'], array('apprv_frm_speaker_brief'))) {
-						
-						$datasession = $this->ci->session->userdata('logged_in');
-
-						if (in_array('Medical Scientific Liaison user group', $datasession['usergroup_name'])) {
-							#MSL Approval button on first submit
-							if (!$this->ci->dp_eform->check_request_msl_prior_approved($data_menu, $data_id) && !in_array($data_menu['url'], array('apprv_frm_gimmicks'))) {
-								$button_revise_disabled = "disabled";
-								$button_reject_disabled = "";
-								$button_approve_text = "Approve with No Changes";
-								$button_approve_with_changes_js = "
-								var x = document.getElementById('fureviewfile').value;
-								if (x == '') {
-									var confirm_no_file = confirm('APPROVE WITH CHANGES WITHOUT REVIEWED/NOTED FILE ?');
-										if (confirm_no_file == true) {
-												return true;
-											} else {
-												return false;
-											}
-									} else {
-										return true;
-									}
-								";
-								$button_approve_with_changes = "&nbsp;<button type=\"submit\" name=\"submission\" value=\"approve_with_changes\" class=\"btn btn-primary\" onClick=\"".$button_approve_with_changes_js."\"><i class=\"fa fa-exclamation\" aria-hidden=\"true\"></i> <i class=\"fa fa-check\" aria-hidden=\"true\"></i>&nbsp;".$this->check_vocab($language,"Approve with Changes")."</button>";
-							}
-						} else { #Approvers other than MSL prior MSL review
-							$query_approved_by_MSL = $this->ci->dp_eform->check_request_msl_prior_approved($data_menu, $data_id);
-							if (count($query_approved_by_MSL) < 2 && !$this->ci->dp_eform->check_approver_sequence_level_1_2($data_menu, $data_id, $datasession)) { #MSL users must at least approve twice
-								$button_revise_disabled = "disabled";
-								$button_reject_disabled = "disabled";
-								$button_approve_text = "Approve with No Changes";
-								$button_approve_with_changes_js = "
-								var x = document.getElementById('fureviewfile').value;
-								if (x == '') {
-									var confirm_no_file = confirm('APPROVE WITH CHANGES WITHOUT REVIEWED/NOTED FILE ?');
-										if (confirm_no_file == true) {
-												return true;
-											} else {
-												return false;
-											}
-									} else {
-										return true;
-									}
-								";
-								$button_approve_with_changes = "&nbsp;<button type=\"submit\" name=\"submission\" value=\"approve_with_changes\" class=\"btn btn-primary\" onClick=\"".$button_approve_with_changes_js."\"><i class=\"fa fa-exclamation\" aria-hidden=\"true\"></i> <i class=\"fa fa-check\" aria-hidden=\"true\"></i>&nbsp;".$this->check_vocab($language,"Approve with Changes")."</button>";
-							}
-						}
-					}
-				}
-				# [END OF] customized for Mundi EPMAP Project 2020
 
 				$btn_submit_request = "&nbsp;<button type=\"submit\" name=\"submission\" value=\"revise\" class=\"btn btn-warning\" onClick=\"btn_response();\" ".$button_revise_disabled."><i class=\"fa fa-exclamation\" aria-hidden=\"true\"></i>&nbsp;".$this->check_vocab($language,"Revise")."</button>&nbsp;<button type=\"submit\" name=\"submission\" value=\"reject\" class=\"btn btn-danger\" onClick=\"btn_response();\" ".$button_reject_disabled."><i class=\"fa fa-times\" aria-hidden=\"true\"></i>&nbsp;".$this->check_vocab($language,"Reject")."</button>".$button_approve_with_changes."&nbsp;<button type=\"submit\" name=\"submission\" value=\"approve\" class=\"btn btn-success\" onClick=\"btn_response();\" ".$button_disabled."><i class=\"fa fa-check\" aria-hidden=\"true\"></i>&nbsp;".$this->check_vocab($language,$button_approve_text)."</button>";
 
@@ -316,54 +222,13 @@ class Content_eform {
                     <button type=\"button\" class=\"btn bg-orange\" onclick=\"location.href='".$btn_href_cancel."';\"><i class=\"fa fa-times\" aria-hidden=\"true\"></i>&nbsp;".$this->check_vocab($language,$btn_cancel)."</button>".$btn_save.$btn_submit_request."
                   </div>".$form_close."</div><!-- /.box -->";
 			} else {
-				#customized fot MUNDIPHARMA, ePMAP Project 2020, display upload file for reviewer
-				$html_upload_file_reviewer = "";
-
-				if ($formtype == 'mainform' && $data_menu['is_approval'] == 1) {
-
-					$datasession = $this->ci->session->userdata('logged_in');
-					$language = $datasession['language'];
-
-					$html_upload_file_reviewer = '
-						<div class="box-body">
-							<div class="form-group">
-								<label for="label">Upload File by Reviewer/Approver (pdf/jpg/jpeg/bmp/png ; max.10MB)</label><input type="file"  id="fureviewfile" name = "fureviewfile">
-							</div>
-						</div>';
-
-					if (in_array('epmap - Regulatory Affairs Manager', $datasession['usergroup_name'])) {
-						$html_upload_file_reviewer = '
-						<div class="box-body">
-							<div class="form-group">
-								<label for="label">Upload File by Reviewer/Approver (pdf/jpg/jpeg/bmp/png ; max.10MB)</label><input type="file"  id="fureviewfile" name = "fureviewfile">
-							</div>
-							<div class="form-group"><label for="label">Require BPOM / Government Agency Review Process ?<font color="red">*</font></label>
-								<select name="ddbpom" id="ddbpom" class="form-control select2" style="width: 100%;" >
-									<option value=0>'.$this->check_vocab($language,'No').'</option>
-									<option value=1>'.$this->check_vocab($language,'Yes').'</option>
-								</select>
-							</div>
-						</div>';
-					}
-
-					if (!$this->ci->wf->show_approval_comm_box($datasession,$data_menu,$data_detail,$data_id)) {
-						if ($html_upload_file_reviewer != "") { $html_upload_file_reviewer = "";}
-						if ($btn_submit_request != "") { $btn_submit_request = "";}
-					}
-				}
-
-				# [END OF] customized fot MUNDIPHARMA, ePMAP Project 2020, display upload file for reviewer
-				
-				/*$button_panel_2 = "
-					<div class=\"box-footer\" id=\"div_button_panel\">
-                    <button type=\"button\" class=\"btn bg-orange\" onclick=\"location.href='".$btn_href_cancel."';\"><i class=\"fa fa-times\" aria-hidden=\"true\"></i>&nbsp;".$this->check_vocab($language,$btn_cancel)."</button>".$btn_save.$btn_submit_request."
-                  </div>".$form_close."</div><!-- /.box -->";*/
-
-                 $button_panel_2 = $html_upload_file_reviewer."
+				$button_panel_2 = "
 					<div class=\"box-footer\" id=\"div_button_panel\">
                     <button type=\"button\" class=\"btn bg-orange\" onclick=\"location.href='".$btn_href_cancel."';\"><i class=\"fa fa-times\" aria-hidden=\"true\"></i>&nbsp;".$this->check_vocab($language,$btn_cancel)."</button>".$btn_save.$btn_submit_request."
                   </div>".$form_close."</div><!-- /.box -->";
-			}
+
+            }
+
 			$contents = "<div class=\"box box-primary table-responsive\">".$form_open."
                   <div class=\"box-body\">
                     <div class=\"form-group\">".$form_components."
@@ -386,11 +251,8 @@ class Content_eform {
     	$options_status_dropdown_array = array();
 
     	if ($data_menu['is_workflowdata'] == 1) {
-    		#customized fot MUNDIPHARMA, ePMAP Project 2020, modify filter handling
-    		/*$js = "id=\"show_request\" class=\"form-control select2\" style=\"width: 100%;\" 
-    		onchange='window.location = \"".site_url($control_name."/show_request/".$menu_name."/")."\"+this.value;'";*/
-    		$js = "id=\"show_request\" class=\"form-control select2\" style=\"width: 100%;\" ";
-    		#[END OF] customized fot MUNDIPHARMA, ePMAP Project 2020, modify filter handling
+    		$js = "id=\"show_request\" class=\"form-control select2\" style=\"width: 100%;\" 
+    		onchange='window.location = \"".site_url($control_name."/show_request/".$menu_name."/")."\"+this.value;'";
     		$options_status_dropdown_array = array(
 		        'All' => $this->check_vocab($language,"All"),
 		        'Draft' => $this->check_vocab($language,"Draft"),
@@ -404,11 +266,8 @@ class Content_eform {
 		}
 
 		if ($data_menu['is_approval'] == 1) {
-			#customized fot MUNDIPHARMA, ePMAP Project 2020, modify filter handling
-    		/*$js = "id=\"show_request\" class=\"form-control select2\" style=\"width: 100%;\" 
-    		onchange='window.location = \"".site_url($control_name."/show_request/".$menu_name."/")."\"+this.value;'";*/
-    		$js = "id=\"show_request\" class=\"form-control select2\" style=\"width: 100%;\"";
-    		#[END OF] customized fot MUNDIPHARMA, ePMAP Project 2020, modify filter handling
+			$js = "id=\"show_request\" class=\"form-control select2\" style=\"width: 100%;\" 
+    		onchange='window.location = \"".site_url($control_name."/show_request/".$menu_name."/")."\"+this.value;'";
     		$options_status_dropdown_array = array(
     			'Waiting Approval' => $this->check_vocab($language,"Waiting Approval"),
     			'I have processed' => $this->check_vocab($language,"Requests I have processed"),
@@ -456,56 +315,6 @@ class Content_eform {
 		$this->ci->load->library('shared_variables','','shared_variables');
 		$additional_forms = $this->ci->shared_variables->display_reference_column;
 
-		#customized fot MUNDIPHARMA, ePMAP Project 2020, display bpom status
-		$bpom_status = "";
-		if (($data_menu['is_workflowdata'] == 1 || $data_menu['is_approval'] == 1 || in_array($data_menu['url'], $additional_forms)) && $data_menu['full_table_name'] == 'epmap_req_material_data') {
-
-			if ($data_detail) {
-				if (array_key_exists('Id', $data_detail)) {
-					$check_bpom_status = $this->ci->dp_eform->check_bpom_status($data_menu,$data_detail['Id']);
-					
-					if ($check_bpom_status) {
-						if ((int) $check_bpom_status->is_bpom_required == 1) {
-							switch ($check_bpom_status->bpom_process_status) {
-								case 'In Process':
-									$bpom_status = "<strong>Regulatory Note:<br><font color='orange'>REQUIRES BPOM/GOV. AGENCY REVIEW PROCESS</font></strong>";
-									break;
-								case 'Approved':
-									$bpom_status = "<strong>Regulatory Note:<br><font color='green'>BPOM/GOV. AGENCY REVIEW: APPROVED</font></strong>";
-									break;
-								case 'Rejected':
-									$bpom_status = "<strong>Regulatory Note:<br><font color='red'>BPOM/GOV. AGENCY REVIEW: REJECTED</font></strong>";
-									break;
-								default:
-									# code...
-									break;
-							}
-						}
-						if ((int) $check_bpom_status->is_regional_required == 1) {
-							if ($bpom_status != "") {
-								$bpom_status .= "<br>";
-							}
-							switch ($check_bpom_status->regional_status) {
-								case 'In Process':
-									$bpom_status .= "<strong>Regional Note:<br><font color='orange'>REQUIRES REGIONAL REVIEW PROCESS</font></strong>";
-									break;
-								case 'Approved':
-									$bpom_status .= "<strong>Regional Note:<br><font color='green'>REGIONAL REVIEW: APPROVED</font></strong>";
-									break;
-								case 'Rejected':
-									$bpom_status .= "<strong>Regional Note:<br><font color='red'>REGIONAL REVIEW: REJECTED</font></strong>";
-									break;
-								default:
-									# code...
-									break;
-							}
-						}
-					}
-				}
-			}
-		}
-		# [END OF] customized fot MUNDIPHARMA, ePMAP Project 2020, display bpom status
-		
 		if ($show_interface) {
 			if (array_key_exists('request_reference_number',$data_detail)) {
 				$request_reference_number = $data_detail['request_reference_number'];
@@ -519,8 +328,8 @@ class Content_eform {
 			$subform_title = "";
 		}
 		
-		//$content_header = "<h1>".$this->check_vocab($language,$data_menu['title']).$request_reference_number."</h1>".$subform_title;
-		$content_header = "<h1>".$this->check_vocab($language,$data_menu['title']).$request_reference_number."</h1>".str_replace("zzz", "/", $subform_title).$bpom_status;
+		$content_header = "<h1>".$this->check_vocab($language,$data_menu['title']).$request_reference_number."</h1>".$subform_title;
+		
 		return $content_header;	
 	}
 	
