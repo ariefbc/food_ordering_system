@@ -273,22 +273,31 @@ class Data_process_eform extends CI_Model {
 		}
 	}
 
-	function get_field_to_review($data_menu,$field_id) {
-		$current_conn = $this->db;
-		$current_db = $current_conn->database;
+	function get_subform_data($data_menu) {
 		$app_init = $this->app_init->app_init();
 		$applat_db = $app_init['applat_db_name'];
 		
-		$this->db->query('use '.$applat_db);
-
-		$this->db->select('Id');
-		$this->db->where('url', $data_menu['url']);
-		$this->db->where('Id', $field_id);
-		$this->db->from('v_fieldstoreview');
+		$this->db->select();
+		$this->db->from($applat_db.'.refsubform_menu');
+		$this->db->where('menu_id', $data_menu['id']);
+		$this->db->where('isdelete', 0);
 		
 		$tmp = $this->db->get()->result();
 
-		$this->db->query('use '.$current_db);
+		return $tmp;	
+	}
+
+
+	function get_field_to_review($data_menu,$field_id) {
+		$app_init = $this->app_init->app_init();
+		$applat_db = $app_init['applat_db_name'];
+		
+		$this->db->select('Id');
+		$this->db->where('url', $data_menu['url']);
+		$this->db->where('Id', $field_id);
+		$this->db->from($applat_db.'.v_fieldstoreview');
+		
+		$tmp = $this->db->get()->result();
 
 		return $tmp;	
 	}
@@ -1149,6 +1158,7 @@ class Data_process_eform extends CI_Model {
 		$order_sort = ($query[0]->order_sort != '') ? strtoupper($query[0]->order_sort) : 'ASC';
 		$field_name = $query[0]->field_name;
 		$full_table_name = $query[0]->dbname.'.'.$query[0]->full_table_name;
+		$dbname = $query[0]->dbname;
 
 		if ($query[0]->sub_form_id != NULL) {
 			$app_init = $this->app_init->app_init();
@@ -1166,7 +1176,7 @@ class Data_process_eform extends CI_Model {
 			$query =  $this->db->get()->result();
 			$field_name = $query[0]->field_name;
 			$full_table_name = $query[0]->dbname.'.'.$query[0]->full_table_name;
-
+			$dbname = $query[0]->dbname;
 		}
 		
 		////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1175,6 +1185,18 @@ class Data_process_eform extends CI_Model {
 		$query = array();
 
 		$this->db->select($full_table_name.'.Id as item_value,'.$full_table_name.'.'.$field_name.' as item_text');
+
+		// MODIFIED ESTABLISHED 2021, GET PRICE INFO FOR FOOD AND BEVERAGES
+		if ($full_table_name == $dbname.'.fos_ref_food') {
+			$this->db->select('food_price as price');
+			$this->db->where($full_table_name.'.food_status', 'Ready');
+		}
+
+		if ($full_table_name == $dbname.'.fos_ref_beverages') {
+			$this->db->select('beverage_price as price');
+			$this->db->where($full_table_name.'.beverage_status', 'Ready');
+		}
+		// [END OF] MODIFIED ESTABLISHED 2021, GET PRICE INFO FOR FOOD AND BEVERAGES
 		
 		$this->db->from($full_table_name);
 		
@@ -1187,7 +1209,7 @@ class Data_process_eform extends CI_Model {
 		}
 		
 		$query['query'] =  $this->db->get()->result();
-
+		
 		////////////////////////////////////////////////////////////////////////////////////////////////
 		
 		return $query;
@@ -2008,44 +2030,29 @@ class Data_process_eform extends CI_Model {
 	}
 	
 	function get_data_extend_from_table($data_menu) {
-		$current_conn = $this->db;
-		$current_db = $current_conn->database;
 		$app_init = $this->app_init->app_init();
 		$applat_db = $app_init['applat_db_name'];
 		
-		$this->db->query('use '.$applat_db);
-
 		$this->db->select('from_menu_id,label,field_name,selection_component_id');
-		$this->db->from('refextend_datamenu');
-		$this->db->join('refforms','refforms.Id = refextend_datamenu.selection_component_id');
-		$this->db->where('refextend_datamenu.to_menu_id', $data_menu['id']);
-		$this->db->where('refextend_datamenu.isdelete', 0);
+		$this->db->from($applat_db.'.refextend_datamenu');
+		$this->db->join($applat_db.'.refforms',$applat_db.'.refforms.Id = '.$applat_db.'.refextend_datamenu.selection_component_id');
+		$this->db->where($applat_db.'.refextend_datamenu.to_menu_id', $data_menu['id']);
+		$this->db->where($applat_db.'.refextend_datamenu.isdelete', 0);
 		$this->db->limit(1);
 		
 		$query =  $this->db->get()->result();
-
-		$this->db->query('use '.$current_db);
 
 		$from_menu_id = $query[0]->from_menu_id;
 		$tmp['label'] = $query[0]->label;
 		$tmp['field_name'] = $query[0]->field_name;
 		
-		$current_conn = $this->db;
-		$current_db = $current_conn->database;
-		$app_init = $this->app_init->app_init();
-		$applat_db = $app_init['applat_db_name'];
-		
-		$this->db->query('use '.$applat_db);
-
 		$this->db->select();
-		$this->db->from('refmenu');
+		$this->db->from($applat_db.'.refmenu');
 		$this->db->where('Id', $from_menu_id);
 		$this->db->where('isdelete', 0);
 		$this->db->limit(1);
 		
 		$from_data_menu =  $this->db->get()->result();
-
-		$this->db->query('use '.$current_db);
 
 		$tmp['full_table_name'] = $from_data_menu[0]->full_table_name;
 		
@@ -2243,8 +2250,21 @@ class Data_process_eform extends CI_Model {
 		$tmp_id = "";
 		
 		$this->db->select('hash_link');
-		$this->db->where('draft_id', $draft_id);
 		$this->db->from($data_menu['full_table_name']);
+
+		//$this->db->where('draft_id', $draft_id);
+
+		// MODIFIED ESTABLISHED 2021, GET THE LATEST ORDER FOR ORDER FORM
+		if ($data_menu['full_table_name'] == 'fos_orders_data') {
+			$datasession = $this->session->userdata('logged_in');
+
+			$this->db->where('createby',$datasession['username']);
+			$this->db->order_by('Id','desc');
+			$this->db->limit(1);
+		} else {
+			$this->db->where('draft_id', $draft_id);
+		}
+		// [END OF] MODIFIED ESTABLISHED 2021, GET THE LATEST ORDER FOR ORDER FORM
 		
 		$row = array();
 		$row =  $this->db->get()->result()[0];
@@ -2309,8 +2329,38 @@ class Data_process_eform extends CI_Model {
 		);
 		$data = array_merge($data,$tmp);
 
+		// MODIFIED ESTABLISHED 2021, APPEND SUBTOTAL FOR FOOD AND BEVERAGES
+		$order_id = 0;
+
+		if ($formtype == 'subform' && $data_menu['url'] == 'orders') {
+			if ($table_name == 'fos_orders_food') {
+				$data['food_price'] = $this->get_food_price($data['food_id']);
+				$data['food_subtotal_price'] = $data['food_price'] * $data['food_quantity'];
+			}
+
+			if ($table_name == 'fos_orders_beverages') {
+				$data['beverage_price'] = $this->get_beverage_price($data['beverage_id']);
+				$data['beverage_subtotal_price'] = $data['beverage_price'] * $data['beverage_quantity'];
+			}
+
+			$this->db->select('fos_orders_data_id');
+			$this->db->from($table_name);
+			$this->db->where('Id',$id);
+			
+			$query =  $this->db->get()->result();
+
+			$order_id = $query[0]->fos_orders_data_id;
+		}
+		// [END OF] MODIFIED ESTABLISHED 2021, APPEND SUBTOTAL FOR FOOD AND BEVERAGES
+
 		$this->db->where('Id', $id);
 		$this->db->update($table_name, $data);
+
+		// MODIFIED ESTABLISHED 2021, UPDATE ORDER TOTAL BILLED
+		if ($formtype == 'subform' && $data_menu['url'] == 'orders') {
+			$this->update_total_billed($order_id);
+		}
+		// [END OF] MODIFIED ESTABLISHED 2021, UPDATE ORDER TOTAL BILLED
 
 		$log['app_id'] = $datasession['app_id'];
 		$log['data_trans_type'] = 'DATA CHANGES';
@@ -2583,7 +2633,54 @@ class Data_process_eform extends CI_Model {
 		$hash_link = $this->generate_hash_link($table_name);
 		$data = array_merge($data,array('hash_link' => $hash_link));
 
+		// MODIFIED ESTABLISHED 2021, APPEND ORDER NUMBER
+		if ($data_menu['full_table_name'] == 'fos_orders_data' && $formtype == 'mainform') {
+			$current_date = $data['createdate'];
+			$current_date_array = explode(' ',$current_date);
+			$current_date = $current_date_array[0];
+
+			$current_date_array = explode('/',$current_date);
+			$dd = $current_date_array[2];
+			$mm = $current_date_array[1];
+			$yyyy = $current_date_array[0];
+
+			$this->db->select('Id');
+			$this->db->from('fos_orders_data');
+			$this->db->where('createdate like ("'.str_replace('/','-',$current_date).'%")', NULL);
+			
+			$query =  $this->db->get()->result();
+
+			$count = substr((string) count($query) + 1001,1);
+
+			$data['order_number'] = 'ABC'.$dd.$mm.$yyyy.'-'.$count;
+		}
+		// [END OF] MODIFIED ESTABLISHED 2021, APPEND ORDER NUMBER
+
+		// MODIFIED ESTABLISHED 2021, APPEND SUBTOTAL FOR FOOD AND BEVERAGES
+		$order_id = 0;
+
+		if ($formtype == 'subform' && $data_menu['url'] == 'orders') {
+			if ($table_name == 'fos_orders_food') {
+				$data['food_price'] = $this->get_food_price($data['food_id']);
+				$data['food_subtotal_price'] = $data['food_price'] * $data['food_quantity'];
+			}
+
+			if ($table_name == 'fos_orders_beverages') {
+				$data['beverage_price'] = $this->get_beverage_price($data['beverage_id']);
+				$data['beverage_subtotal_price'] = $data['beverage_price'] * $data['beverage_quantity'];
+			}
+
+			$order_id = $data['fos_orders_data_id'];
+		}
+		// [END OF] MODIFIED ESTABLISHED 2021, APPEND SUBTOTAL FOR FOOD AND BEVERAGES
+
 		$this->db->insert($table_name, $data);
+
+		// MODIFIED ESTABLISHED 2021, UPDATE ORDER TOTAL BILLED
+		if ($formtype == 'subform' && $data_menu['url'] == 'orders') {
+			$this->update_total_billed($order_id);
+		}
+		// [END OF] MODIFIED ESTABLISHED 2021, UPDATE ORDER TOTAL BILLED
 		
 		$log['app_id'] = $datasession['app_id'];
 		$log['data_trans_type'] = 'DATA ENTRY';
@@ -2620,5 +2717,54 @@ class Data_process_eform extends CI_Model {
 		$log['ip_address'] = $this->input->ip_address();
 		$log['data_changes'] = $table_name." zzz Id: ".$id;
 		$this->update_log($log);
+	}
+
+	function get_food_price($data_id) {
+		$this->db->select('food_price');
+		$this->db->from('fos_ref_food');
+		$this->db->where('Id',$data_id);
+		
+		$query =  $this->db->get()->result();
+		
+		return $query[0]->food_price;
+	}
+
+	function get_beverage_price($data_id) {
+		$this->db->select('beverage_price');
+		$this->db->from('fos_ref_beverages');
+		$this->db->where('Id',$data_id);
+		
+		$query =  $this->db->get()->result();
+
+		return $query[0]->beverage_price;
+	}
+
+	function update_total_billed($order_id) {
+		$total_billed = 0;
+
+		$this->db->select('food_subtotal_price as subtotal');
+		$this->db->from('fos_orders_food');
+		$this->db->where('fos_orders_data_id',$order_id);
+		$this->db->where('isdelete',0);
+		
+		$query =  $this->db->get()->result();
+
+		foreach ($query as $row) {
+			$total_billed += $row->subtotal;
+		}
+
+		$this->db->select('beverage_subtotal_price as subtotal');
+		$this->db->from('fos_orders_beverages');
+		$this->db->where('fos_orders_data_id',$order_id);
+		$this->db->where('isdelete',0);
+		
+		$query =  $this->db->get()->result();
+
+		foreach ($query as $row) {
+			$total_billed += $row->subtotal;
+		}
+		
+		$this->db->where('Id', $order_id);
+		$this->db->update('fos_orders_data', ['total_billed' => $total_billed]);
 	}
 }

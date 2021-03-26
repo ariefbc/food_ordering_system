@@ -1237,8 +1237,18 @@ class Eform extends CI_Controller {
 							# code...
 							break;
 					}
+
+					
 					foreach ($query as $row) {
-						$options[$row->item_value] = $row->item_text;
+						//$options[$row->item_value] = $row->item_text;
+
+						// MODIFIED ESTABLISHED 2021, APPEND PRICE IN THE DROPDOWN FOR FOOD AND BEVERAGE
+						if (in_array($form_field->field_name, array('food_id','beverage_id'))) {
+							$options[$row->item_value] = $row->item_text.' - Rp.'.number_format($row->price,0,'',',');
+						} else {
+							$options[$row->item_value] = $row->item_text;
+						}
+						// [END OF] MODIFIED ESTABLISHED 2021, APPEND PRICE IN THE DROPDOWN FOR FOOD AND BEVERAGE
 					}
 				}
 				
@@ -1296,15 +1306,15 @@ class Eform extends CI_Controller {
 
 					$options_tmp = array();
 
-					foreach ($options as $key => $value) {
-						if ($data_value && $key == $data_value) {
-							$options_tmp[$key] = $options[$key];
-						}
-					}
+					// foreach ($options as $key => $value) {
+					// 	if ($data_value && $key == $data_value) {
+					// 		$options_tmp[$key] = $options[$key];
+					// 	}
+					// }
 
-					if ($options_tmp) {
-						$options = $options_tmp;
-					}
+					// if ($options_tmp) {
+					// 	$options = $options_tmp;
+					// }
 
 					$tmp = form_dropdown($form_field->control_name,$options,$data_value,'id="'.$form_field->control_name.'" class="form-control select2" style="width: 100%;"'.$disabled.' '.$js_onchange_caller);
 					
@@ -1696,7 +1706,7 @@ class Eform extends CI_Controller {
 					
 					$this->dp_eform->new_data($datasession,$data_menu,$form_fields,$datapost,$formtype,$subform_name);
 					if ($formtype != 'subform') {
-						if ($datapost['draft_id'] != NULL) {
+						if ($datapost['draft_id'] != NULL || ($data_menu['is_masterdata'] == 1 && $this->dp_eform->get_subform_data($data_menu))) {
 							$data_id = $this->dp_eform->get_data_id_from_draft($data_menu,$datapost['draft_id']);
 
 							if ($checkbox_tables) {
@@ -1876,7 +1886,7 @@ class Eform extends CI_Controller {
 											}
 											";
 									}
-									#[END OF] set session via js
+									# [END OF] set session via js
 								}
 								$btn_add_subform_data = "</br>
 								<button type=\"button\" ".$btn_add_disabled." class=\"btn bg-orange\" onclick=\"".$btn_add_subform_data_js."location.href='".site_url($this->control_name."/subform/add/".$menu_name)."/".str_replace("/","zzz",$row->subform_name)."/".$data_id."';\"><i class=\"fa fa-plus-circle\" aria-hidden=\"true\"></i>&nbsp;".$this->data_process_translate->check_vocab($language,"Add")."</button>";		
@@ -1894,9 +1904,9 @@ class Eform extends CI_Controller {
 								  <tr style='background-color: ".$row->separator_bgcolor.";'>
 								    <td align=\"center\"><strong>".$this->data_process_translate->check_vocab($language,$row->separator_title)."</strong></td>
 								  </tr>
-								</table><br>";;
+								</table><br>";
 						}
-						#[END OF] separator for each subform
+						# [END OF] separator for each subform
 							
 						$subformgrid .= "<hr>".$separator."<label>".$this->data_process_translate->check_vocab($language,$row->subform_name)."</label>".$mandatory_subform_data.$btn_add_subform_data."<br>".$this->load_datagrid($data_menu,$menu_name,$datapost,1000000,0,'subform',str_replace("/", "zzz", $row->subform_name),$main_id,$task);
 					}
@@ -1949,8 +1959,9 @@ class Eform extends CI_Controller {
 				$query = $this->dp_eform->get_data_extend_from_table($data_menu);
 				$label = $query['label'];
 
+				$field_name = $query['field_name'];
 				foreach($query['query'] as $row) {
-					$options[$row->Id] = $row->$query['field_name'];
+					$options[$row->Id] = $row->$field_name;
 				}
 
 				$data['content'] = $this->content->load_content_form_selection($language,$this->control_name,$menu_name,$label,$options);

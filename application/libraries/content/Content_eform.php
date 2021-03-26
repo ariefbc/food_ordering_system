@@ -112,7 +112,7 @@ class Content_eform {
 					$subform_disable_edit = TRUE;
 				}
 			}
-
+			
 			$form_open = "";
 			$form_close = "";
 			$btn_cancel = "Close";
@@ -147,6 +147,14 @@ class Content_eform {
 					
 					if ($data_menu['is_masterdata'] == 1 || $formtype == 'subform') {
 						$txt_btn_save = "Save";
+
+						// MODIFIED ESTABLISHED 2021, CHANGE SAVE BUTTON TEXT
+						if ($data_menu['url'] == 'orders' && 
+							$formtype== 'mainform' &&
+							$task == 'new') {
+								$txt_btn_save = "Open Order";
+						}
+						// [END OF]MODIFIED ESTABLISHED 2021, CHANGE SAVE BUTTON TEXT
 					} else {
 						$txt_btn_save = "Save as Draft";
 						$draft_value = " value=\"Draft\" ";
@@ -226,6 +234,18 @@ class Content_eform {
 					<div class=\"box-footer\" id=\"div_button_panel\">
                     <button type=\"button\" class=\"btn bg-orange\" onclick=\"location.href='".$btn_href_cancel."';\"><i class=\"fa fa-times\" aria-hidden=\"true\"></i>&nbsp;".$this->check_vocab($language,$btn_cancel)."</button>".$btn_save.$btn_submit_request."
                   </div>".$form_close."</div><!-- /.box -->";
+
+				  // MODIFIED ESTABLISHED 2021, CHANGE BUTTON PANEL 2 FOR ORDER FORM
+				  if ($formtype == 'mainform' &&
+				  		$data_menu['url'] == 'orders') {
+
+							$button_panel_2 = "
+								<div class=\"box-footer\" id=\"div_button_panel\">
+								<button type=\"button\" class=\"btn bg-orange\" onclick=\"location.href='".$btn_href_cancel."';\"><i class=\"fa fa-arrow-circle-left\" aria-hidden=\"true\"></i>&nbsp;".$this->check_vocab($language,"Order List")."</button>"."
+							</div>".$form_close."</div><!-- /.box -->";
+
+				  }
+				  // [END OF] MODIFIED ESTABLISHED 2021, CHANGE BUTTON PANEL 2 FOR ORDER FORM
 
             }
 
