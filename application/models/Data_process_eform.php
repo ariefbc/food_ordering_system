@@ -2055,11 +2055,36 @@ class Data_process_eform extends CI_Model {
 		$from_data_menu =  $this->db->get()->result();
 
 		$tmp['full_table_name'] = $from_data_menu[0]->full_table_name;
+
+		// MODIFIED ESTABLISHED 2021, DISPLAY DINING TABLE WITH CLOSED ORDER ONLY
+		$exclude_table_number ="";
+
+		if ($data_menu['url'] == 'orders' && $from_data_menu[0]->full_table_name== 'fos_ref_dining_table_number') {
+			$this->db->select('fos_ref_dining_table_number_id');
+			$this->db->from('fos_orders_data');
+			$this->db->where('order_status', 'OPEN');
+			$this->db->where('isdelete', 0);
+			
+			$query =  $this->db->get()->result();
+
+			foreach ($query as $row) {
+				$exclude_table_number .= ($exclude_table_number == "") ? $row->fos_ref_dining_table_number_id : ",".$row->fos_ref_dining_table_number_id ;
+			}
+		}
+		// [END OF] MODIFIED ESTABLISHED 2021, DISPLAY DINING TABLE WITH CLOSED ORDER ONLY
 		
 		$this->db->select($from_data_menu[0]->full_table_name.'.*');
 		$this->db->from($from_data_menu[0]->full_table_name);
 		
 		$this->db->where($from_data_menu[0]->full_table_name.'.isdelete', 0);
+
+		// MODIFIED ESTABLISHED 2021, DISPLAY DINING TABLE WITH CLOSED ORDER ONLY
+		if ($data_menu['url'] == 'orders' && $from_data_menu[0]->full_table_name== 'fos_ref_dining_table_number') {
+			if ($exclude_table_number !== "") {
+				$this->db->where($from_data_menu[0]->full_table_name.'.Id not in ('.$exclude_table_number.')', NULL);
+			}
+		}
+		// [END OF] MODIFIED ESTABLISHED 2021, DISPLAY DINING TABLE WITH CLOSED ORDER ONLY
 		
 		$tmp['query'] = $this->db->get()->result();
 
@@ -2766,5 +2791,15 @@ class Data_process_eform extends CI_Model {
 		
 		$this->db->where('Id', $order_id);
 		$this->db->update('fos_orders_data', ['total_billed' => $total_billed]);
+	}
+
+	function check_order_status($hash_link) {
+		$this->db->select('order_status');
+		$this->db->from('fos_orders_data');
+		$this->db->where('hash_link',$hash_link);
+		
+		$query =  $this->db->get()->result();
+
+		return $query[0]->order_status;
 	}
 }

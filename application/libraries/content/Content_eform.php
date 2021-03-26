@@ -236,13 +236,21 @@ class Content_eform {
                   </div>".$form_close."</div><!-- /.box -->";
 
 				  // MODIFIED ESTABLISHED 2021, CHANGE BUTTON PANEL 2 FOR ORDER FORM
-				  if ($formtype == 'mainform' &&
-				  		$data_menu['url'] == 'orders') {
+				  if ($formtype == 'mainform') {
+					if ($data_menu['url'] == 'orders') {
+						$button_panel_2 = "
+							<div class=\"box-footer\" id=\"div_button_panel\">
+							<button type=\"button\" class=\"btn bg-orange\" onclick=\"location.href='".$btn_href_cancel."';\"><i class=\"fa fa-arrow-circle-left\" aria-hidden=\"true\"></i>&nbsp;".$this->check_vocab($language,"Order List")."</button>"."
+						</div>".$form_close."</div><!-- /.box -->";
+					}
 
-							$button_panel_2 = "
-								<div class=\"box-footer\" id=\"div_button_panel\">
-								<button type=\"button\" class=\"btn bg-orange\" onclick=\"location.href='".$btn_href_cancel."';\"><i class=\"fa fa-arrow-circle-left\" aria-hidden=\"true\"></i>&nbsp;".$this->check_vocab($language,"Order List")."</button>"."
-							</div>".$form_close."</div><!-- /.box -->";
+					if ($data_menu['url'] == 'payments') {
+						$button_panel_2 = "
+							<div class=\"box-footer\" id=\"div_button_panel\">
+							<button type=\"button\" class=\"btn bg-orange\" onclick=\"location.href='".$btn_href_cancel."';\"><i class=\"fa fa-arrow-circle-left\" aria-hidden=\"true\"></i>&nbsp;".$this->check_vocab($language,"Order List")."</button>".$btn_save.$btn_submit_request."
+						</div>".$form_close."</div><!-- /.box -->";
+					}
+
 
 				  }
 				  // [END OF] MODIFIED ESTABLISHED 2021, CHANGE BUTTON PANEL 2 FOR ORDER FORM

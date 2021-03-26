@@ -78,6 +78,12 @@ class Eform extends CI_Controller {
 			$approvers_list_array = $this->wf->get_pending_approvers_list_array($data_menu,$data_id_string);
 		}
 
+		// MODIFIED ESTABLISHED 2021, APPEND ORDER OPEN BY
+		if ($formtype == 'mainform' && in_array($data_menu['url'], array('orders', 'payments'))) {
+			array_push($headings,$this->data_process_translate->check_vocab($language,"Open By"));
+		}
+		// [END OF] MODIFIED ESTABLISHED 2021, APPEND ORDER OPEN BY
+
 		#set dropdown data array
 		foreach ($grid_fields as $grid_field) {
 			if ($grid_field->control_type == 'dropdown') {
@@ -185,6 +191,13 @@ class Eform extends CI_Controller {
 					$data_menu['is_delete_disable'] = $data_menu_tmp['is_delete_disable'];
 				}
 				
+				// MODIFIED ESTABLISHED 2021, IF STATUS IS CLOSED THEN DISABLE EDIT
+				if ($formtype == 'mainform' && $row->order_status == 'CLOSED') {
+					$data_menu['is_edit_disable'] = 1;
+				}
+				// [END OF] MODIFIED ESTABLISHED 2021, IF STATUS IS CLOSED THEN DISABLE EDIT
+
+
 				$btn_edit_label = ($data_menu['is_edit_disable'] == 1)? "Detail" : "Edit";
 
 				if ($formtype != 'subform') {
@@ -523,6 +536,12 @@ class Eform extends CI_Controller {
 
 					array_push($content,array('data'=>$status_string));
 				}
+
+				// MODIFIED ESTABLISHED 2021, APPEND ORDER OPEN BY
+				if ($formtype == 'mainform' && in_array($data_menu['url'], array('orders','payments'))) {
+					array_push($content,array('data'=>$this->dp_eform->get_user_fullname($row->createby)));
+				}
+				// [END OF] MODIFIED ESTABLISHED 2021, APPEND ORDER OPEN BY
 
 				array_push($content,array('data'=>$task));
 		     	
@@ -1790,6 +1809,14 @@ class Eform extends CI_Controller {
 			$data_menu['is_insert_disable'] = $function_access['is_insert_disable'];
 			$data_menu['is_edit_disable'] = $function_access['is_edit_disable'];
 			$data_menu['is_delete_disable'] = $function_access['is_delete_disable'];
+
+			// MODIFIED ESTABLISHED 2021, IF STATUS IS CLOSED THEN DISABLE EDIT
+				if ($formtype == 'mainform' && in_array($data_menu['url'], array('payments','orders'))) {
+					if ($this->dp_eform->check_order_status($data_id) == 'CLOSED') {
+						$data_menu['is_edit_disable'] = 1;
+					}
+				}
+				// [END OF] MODIFIED ESTABLISHED 2021, IF STATUS IS CLOSED THEN DISABLE EDIT
 			
 			$data['menu'] = $this->menu->generatemenu($menu_name,$menu);
 			
